@@ -8,7 +8,7 @@ function json(data, status = 200) {
   });
 }
 
-export async function onRequestGet({ env }) {
+export async function getProducts({ env }) {
   if (!env.DB) return json({ error: 'D1 binding DB 未配置' }, 500);
 
   try {

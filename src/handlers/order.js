@@ -68,7 +68,7 @@ async function insertOrderWithUniqueCode(env, order, validItems, total) {
   throw new Error('生成取餐码失败，请重试');
 }
 
-export async function onRequestPost({ request, env }) {
+export async function createOrder({ request, env }) {
   if (!env.DB) return json({ error: 'D1 binding DB 未配置' }, 500);
 
   try {

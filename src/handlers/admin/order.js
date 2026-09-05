@@ -8,7 +8,7 @@ function json(data, status = 200) {
   });
 }
 
-export async function onRequestPatch({ request, env, params }) {
+export async function updateOrder({ request, env, params }) {
   if (!env.DB) return json({ error: 'D1 binding DB 未配置' }, 500);
 
   const orderId = Number(params.id);

@@ -1,10 +1,13 @@
 {
-  "name": "bakery-shop-pages",
+  "name": "bakery-shop-worker",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Minimal bakery ordering MVP for Cloudflare Pages + Functions + D1",
+  "description": "Minimal bakery ordering MVP for Cloudflare Workers + Static Assets + D1",
   "scripts": {
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy"
   }
 }

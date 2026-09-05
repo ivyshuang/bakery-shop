@@ -4,13 +4,13 @@ import fs from "node:fs";
 const jsFiles = [
   "public/app.js",
   "public/admin/admin.js",
-  "functions/api/products.js",
-  "functions/api/order.js",
-  "functions/api/admin/_middleware.js",
-  "functions/api/admin/orders.js",
-  "functions/api/admin/order/[id].js",
-  "functions/api/admin/products.js",
-  "functions/api/admin/product/[id].js"
+  "src/index.js",
+  "src/handlers/products.js",
+  "src/handlers/order.js",
+  "src/handlers/admin/orders.js",
+  "src/handlers/admin/order.js",
+  "src/handlers/admin/products.js",
+  "src/handlers/admin/product.js"
 ];
 
 for (const rel of jsFiles) {

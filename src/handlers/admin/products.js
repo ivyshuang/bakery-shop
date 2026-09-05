@@ -8,7 +8,7 @@ function json(data, status = 200) {
   });
 }
 
-export async function onRequestGet({ env }) {
+export async function getAdminProducts({ env }) {
   if (!env.DB) return json({ error: 'D1 binding DB 未配置' }, 500);
   try {
     const { results } = await env.DB.prepare(`
@@ -23,7 +23,7 @@ export async function onRequestGet({ env }) {
   }
 }
 
-export async function onRequestPost({ request, env }) {
+export async function createProduct({ request, env }) {
   if (!env.DB) return json({ error: 'D1 binding DB 未配置' }, 500);
   try {
     const body = await request.json();

@@ -8,7 +8,7 @@ function json(data, status = 200) {
   });
 }
 
-export async function onRequestPatch({ request, env, params }) {
+export async function updateProduct({ request, env, params }) {
   if (!env.DB) return json({ error: 'D1 binding DB 未配置' }, 500);
   const id = Number(params.id);
   if (!Number.isInteger(id) || id <= 0) return json({ error: '商品 ID 不正确' }, 400);
