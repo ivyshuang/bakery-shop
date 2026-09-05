@@ -7,6 +7,8 @@ const jsFiles = [
   "src/index.js",
   "src/handlers/products.js",
   "src/handlers/order.js",
+  "src/handlers/payment.js",
+  "src/payments/alipay.js",
   "src/handlers/admin/orders.js",
   "src/handlers/admin/order.js",
   "src/handlers/admin/products.js",

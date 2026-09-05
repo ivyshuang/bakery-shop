@@ -57,9 +57,9 @@ textarea { resize: vertical; }
 .success-dialog h2 { margin: 0; }
 .pickup-code { margin: 16px 0; padding: 16px; border: 2px dashed #c69f81; border-radius: 17px; font-size: 38px; font-weight: 900; letter-spacing: .14em; background: #fff; }
 .amount-row { display: flex; justify-content: space-between; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 13px 0; }
-.qr-wrap { padding: 20px 0 10px; }
-.qr-wrap img { width: min(230px, 75vw); aspect-ratio: 1; object-fit: contain; border-radius: 15px; background: #fff; }
-.qr-wrap p { margin: 8px 0; font-weight: 700; }
+.payment-state { margin: 16px 0 10px; padding: 12px; border-radius: 14px; background: #f3e7d9; font-weight: 800; }
+.payment-state.paid { color: var(--success); background: #dcebdd; }
+.dialog-action { width: 100%; margin-bottom: 9px; }
 .tip { margin: 0 0 16px; color: var(--muted); font-size: 13px; line-height: 1.55; }
 @media (max-width: 520px) {
   .product { grid-template-columns: 58px 1fr; }

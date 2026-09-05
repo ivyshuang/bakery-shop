@@ -1,17 +1,17 @@
-# Bakery Shop MVP · Cloudflare Workers + D1
+# Bakery Shop MVP · Cloudflare Workers + D1 + 支付宝
 
-一个适合私房烘焙轻启动的极简下单系统：
+一个适合私房烘焙轻启动的在线下单系统：
 
 - 顾客手机下单
 - 自动生成 5 位取餐码
-- 支付宝二维码人工收款
-- 商家后台查看订单
-- 确认收款 / 开始制作 / 可取餐 / 已取餐 / 取消
-- 后台直接新增、改价、上下架商品
+- 提交订单后直接唤起支付宝
+- 支付宝异步通知并自动确认到账
+- 商家后台查看和处理订单
+- 后台新增、改价、上架或下架商品
 - Cloudflare D1 存储商品和订单
 - `ADMIN_TOKEN` 保护后台 API
 
-> 第一版故意不接支付宝 API。顾客下单后扫码付款，你在后台人工点“确认收款”，这样上线成本最低。
+支付使用支付宝“手机网站支付”产品和 RSA2 普通公钥模式。下面从零开始完成部署。
 
 ## 项目结构
 
@@ -20,57 +20,52 @@ public/                       # 顾客页面、商家后台和静态资源
   index.html                  # 顾客下单页
   app.js
   styles.css
-  assets/alipay-qr.svg        # 支付宝收款码
   admin/                      # 商家后台
 src/
   index.js                    # Cloudflare Worker 入口和 API 路由
-  handlers/                   # 商品、订单和后台 API
-wrangler.jsonc                # Worker、静态资源和部署配置
-schema.sql                    # D1 数据库结构和示例商品
+  handlers/                   # 商品、订单、支付通知和后台 API
+  payments/alipay.js          # 支付宝 RSA2 签名与验签
+migrations/                   # 已有 D1 数据库的升级脚本
+wrangler.jsonc                # Worker、D1 和静态资源配置
+schema.sql                    # 新数据库结构和示例商品
 ```
 
-下面从零开始，把项目部署到 Cloudflare Workers。
-
-## 1. 准备账号和工具
+## 1. 准备账号
 
 你需要：
 
-- 一个 GitHub 账号
-- 一个 Cloudflare 账号
-- 本机已安装 Git
-- 如果需要本地调试，再安装 Node.js
+- GitHub 账号
+- Cloudflare 账号
+- 支付宝开放平台商家应用
+- 应用已开通“手机网站支付”
+- 接口加签方式为“RSA2 普通公钥模式”
+- 如果需要本地调试，本机安装 Node.js 和 Git
 
-正式部署可以完全通过 GitHub 和 Cloudflare 控制台完成。
+GitHub 仓库可以设为 Private。安装 Cloudflare Workers and Pages GitHub App 时，只授权这个仓库即可，不需要公开代码。
 
-## 2. 换成自己的支付宝二维码
+## 2. 准备支付宝应用信息
 
-把下面的示例文件替换为自己的支付宝收款二维码：
-
-```text
-public/assets/alipay-qr.svg
-```
-
-如果你的二维码是 PNG，可以保存成：
+登录支付宝开放平台，进入开通了“手机网站支付”的应用，准备：
 
 ```text
-public/assets/alipay-qr.png
+APP_ID                  支付宝应用 ID
+应用私钥                由你生成，Worker 用它对支付请求签名
+支付宝公钥              支付宝提供，Worker 用它验证付款通知
 ```
 
-然后在 `public/index.html` 中找到：
+需要特别注意：
 
-```html
-<img src="/assets/alipay-qr.svg" alt="支付宝收款码" />
-```
+- `ALIPAY_PUBLIC_KEY` 填“支付宝公钥”，不是你上传的“应用公钥”。
+- 应用公钥上传给支付宝；与它配对的应用私钥由你自己保管。
+- 应用私钥必须是 PKCS#8 格式，通常以 `-----BEGIN PRIVATE KEY-----` 开头。
+- 任何私钥都不能写进代码、README、GitHub 或 `wrangler.jsonc`。
+- 后面会把这些值保存为 Cloudflare 加密 Secret。
 
-改成：
+## 3. 自定义店铺内容
 
-```html
-<img src="/assets/alipay-qr.png" alt="支付宝收款码" />
-```
+打开 `public/index.html`，修改店名、营业说明和自提提示。商品不需要写进 HTML，部署后可以在商家后台维护。
 
-同时可以在 `public/index.html` 中修改店名、营业说明和自提提示。
-
-## 3. 创建 D1 数据库
+## 4. 创建 D1 数据库
 
 登录 Cloudflare Dashboard，找到 **D1 SQL Database**，点击 **Create database**。
 
@@ -80,80 +75,74 @@ public/assets/alipay-qr.png
 bakery-db
 ```
 
-创建后进入数据库的 Console，把项目根目录下的 `schema.sql` 全部粘贴并执行。
+### 新建数据库
+
+进入数据库的 Console，把项目根目录下的 `schema.sql` 全部粘贴并执行。
 
 它会创建：
 
 - `products`：商品
-- `orders`：订单
+- `orders`：订单和支付宝交易信息
 - `order_items`：订单明细
 
 同时加入海盐卷、原味贝果和黄油曲奇三个示例商品。
 
-## 4. 把 D1 写入 Worker 配置
+### 已经使用过旧版数据库
 
-在 D1 数据库详情页复制：
+如果旧数据库已经有商品或订单，不要重新执行完整的 `schema.sql`。只在 D1 Console 中执行一次：
 
-- Database name
-- Database ID（UUID）
+```text
+migrations/0001_alipay_wap.sql
+```
 
-打开 `wrangler.jsonc`，在 `assets` 前加入 `d1_databases`。配置完成后应类似：
+它会给已有的 `orders` 表增加支付宝商户订单号、支付宝交易号和付款时间。迁移只能执行一次。
+
+## 5. 配置 D1 绑定
+
+在 D1 数据库详情页复制 Database name 和 Database ID（UUID）。
+
+打开 `wrangler.jsonc`，确认配置类似：
 
 ```jsonc
-{
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "bakery-shop",
-  "main": "./src/index.js",
-  "compatibility_date": "2026-09-05",
-  "workers_dev": true,
-  "keep_vars": true,
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "bakery-db",
-      "database_id": "替换成你的真实数据库 UUID"
-    }
-  ],
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS",
-    "run_worker_first": ["/api", "/api/*"],
-    "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page"
+"d1_databases": [
+  {
+    "binding": "DB",
+    "database_name": "bakery-db",
+    "database_id": "你的真实数据库 UUID"
   }
-}
+]
 ```
 
 注意：
 
 - `binding` 必须是 `DB`，代码通过 `env.DB` 访问数据库。
-- `database_id` 必须替换成真实 UUID，不能保留示例文字。
-- 如果数据库名称不是 `bakery-db`，同时修改 `database_name`。
+- `database_id` 必须是真实 UUID。
+- D1 UUID 是资源标识符，不是访问密码；真正的密钥仍然只能保存在 Secret 中。
 
-## 5. 推送到 GitHub
+## 6. 推送到 Private GitHub 仓库
 
-在项目目录执行：
+在 GitHub 创建一个 Private 仓库，然后在项目目录执行：
 
 ```bash
 git init
 git add .
-git commit -m "Initial bakery shop worker"
+git commit -m "Initial bakery shop"
 git branch -M main
 git remote add origin https://github.com/你的用户名/bakery-shop.git
 git push -u origin main
 ```
 
-如果项目已经连接 GitHub，只需要提交并推送本次修改：
+如果已经连接 GitHub：
 
 ```bash
 git add .
-git commit -m "Deploy bakery shop with Cloudflare Workers"
+git commit -m "Add Alipay mobile website payment"
 git push
 ```
 
-## 6. 在新版 Cloudflare 控制台创建 Worker
+## 7. 在新版 Cloudflare 控制台创建 Worker
 
-进入 Cloudflare Dashboard：
+进入：
 
 ```text
 Workers & Pages
@@ -161,9 +150,9 @@ Workers & Pages
 → Import a repository
 ```
 
-授权 GitHub 后选择刚才的 `bakery-shop` 仓库。
+授权 GitHub 时选择 **Only select repositories**，只勾选 `bakery-shop`。
 
-构建配置填写：
+构建配置：
 
 ```text
 Production branch: main
@@ -172,16 +161,11 @@ Build command: npm run check && npm test
 Deploy command: npx wrangler deploy
 ```
 
-保存并开始第一次部署。Wrangler 会：
+第一次部署会上传 Worker 和 `public/` 静态资源。此时支付 Secret 还没有设置，下单接口暂时不可用是正常的。
 
-1. 读取 `wrangler.jsonc`。
-2. 打包 `src/index.js` 中的 Worker。
-3. 把 `public/` 上传为 Worker Static Assets。
-4. 把 D1 作为 `env.DB` 绑定给 Worker。
+如果 Worker 已经存在，进入该 Worker 的 **Settings → Builds**，连接 GitHub 仓库并使用相同配置，不要再创建第二个 Worker。
 
-如果你已经创建了名为 `bakery-shop` 的 Worker，可以进入该 Worker 的 **Settings → Builds**，连接 GitHub 仓库并填写相同配置，不需要再创建第二个项目。
-
-## 7. 设置后台口令 ADMIN_TOKEN
+## 8. 设置后台和支付宝 Secrets
 
 第一次部署完成后，进入 Worker：
 
@@ -191,99 +175,131 @@ Settings
 → Add
 ```
 
-新增加密 Secret：
+依次创建以下加密 Secret：
 
 ```text
-ADMIN_TOKEN = 一段足够长的随机口令
+ADMIN_TOKEN             后台口令，建议至少 20 位随机字符
+ALIPAY_APP_ID            支付宝应用 APP_ID
+ALIPAY_APP_PRIVATE_KEY   PKCS#8 格式的应用私钥
+ALIPAY_PUBLIC_KEY        支付宝提供的支付宝公钥
 ```
 
-建议使用至少 20 位的随机字符串，不要使用 `123456`、手机号或店名。
+粘贴 PEM 密钥时可以保留头尾标记和换行；代码也兼容只有 Base64 正文的形式。
 
-保存后，如果控制台提示部署新版本，就按提示部署。`wrangler.jsonc` 中的 `keep_vars: true` 会在后续 Git 部署时保留控制台设置的 Secret。
-
-## 8. 验证部署
-
-Worker 部署成功后会得到一个 `workers.dev` 地址，例如：
+再新增一个普通文本变量：
 
 ```text
-https://bakery-shop.你的子域.workers.dev
+PUBLIC_BASE_URL = https://你的正式域名
 ```
 
-依次检查：
+例如：
 
 ```text
-顾客页面：https://你的地址/
-商品接口：https://你的地址/api/products
-商家后台：https://你的地址/admin/
+PUBLIC_BASE_URL = https://shop.example.com
 ```
 
-商品接口应该返回 JSON，例如：
+它用于生成支付宝的同步返回地址和异步通知地址。正式收款时应使用支付宝应用中登记的 HTTPS 域名，不要填写末尾路径。
 
-```json
-{
-  "products": [
-    {
-      "id": 1,
-      "name": "海盐卷",
-      "price_cents": 1200
-    }
-  ]
-}
-```
+保存并按控制台提示部署新版本。`wrangler.jsonc` 中的 `keep_vars: true` 会在后续 Git 自动部署时保留这些控制台变量。
 
-进入 `/admin/` 后，输入第 7 步设置的 `ADMIN_TOKEN`。口令只保存在当前浏览器标签页的 `sessionStorage` 中。
+## 9. 绑定正式域名
 
-## 9. 顾客下单流程
-
-```text
-选择商品
-→ 填写姓名和联系方式
-→ 提交订单
-→ 获得 5 位取餐码
-→ 扫支付宝二维码付款
-→ 商家后台确认收款
-→ 开始制作
-→ 标记可取餐
-→ 顾客报码取餐
-```
-
-金额在数据库中始终以“分”为单位保存，避免浮点金额误差。
-
-## 10. 后台商品管理
-
-进入 `/admin/`，切换到“商品”页面，可以：
-
-- 新增商品
-- 修改名称、描述和 emoji
-- 修改价格
-- 上架或下架
-
-修改会直接写入 D1，无需重新部署网站。
-
-## 11. 绑定自定义域名
-
-进入 Worker 的 **Settings → Domains & Routes → Add**，添加由 Cloudflare 托管 DNS 的域名，例如：
+进入 Worker 的 **Settings → Domains & Routes → Add**，绑定由 Cloudflare 托管 DNS 的域名，例如：
 
 ```text
 shop.example.com
 ```
 
-如果线下会印长期使用的二维码，建议二维码指向单独的固定地址，例如：
+域名必须与 `PUBLIC_BASE_URL` 一致，也应与支付宝应用提交审核时登记的网站域名保持一致。
+
+如果暂时没有自定义域名，可以先用 Worker 的 `workers.dev` HTTPS 地址联调，并把完整 origin 填入 `PUBLIC_BASE_URL`，例如：
 
 ```text
-go.example.com
+https://bakery-shop.你的子域.workers.dev
 ```
 
-以后换网站或小程序时，只修改这个地址的跳转目标，不需要重印二维码。
+生产使用前请确认支付宝后台允许该域名。
 
-## 12. 本地开发（可选）
+## 10. 验证基础页面
 
-安装依赖并检查代码：
+依次访问：
 
-```bash
-npm run check
-npm test
+```text
+顾客页面：https://你的域名/
+商品接口：https://你的域名/api/products
+商家后台：https://你的域名/admin/
 ```
+
+商品接口应返回 JSON。进入 `/admin/` 后，输入第 8 步设置的 `ADMIN_TOKEN`。
+
+如果 `/api/products` 返回 `D1 binding DB 未配置`，检查 `wrangler.jsonc` 中的数据库 UUID 和 `DB` 绑定，然后重新部署。
+
+## 11. 测试支付宝支付
+
+建议先创建一件价格很低的测试商品，再用手机浏览器操作：
+
+```text
+选择商品
+→ 填写姓名和联系方式
+→ 提交订单
+→ 跳转支付宝手机网站收银台
+→ 核对收款方和金额
+→ 完成付款
+→ 返回网站并显示取餐码
+→ 后台订单自动变成“已付款”
+```
+
+不要只根据浏览器返回页面判断是否支付成功。系统以支付宝发给下面地址的 RSA2 验签通知为准：
+
+```text
+https://你的正式域名/api/payment/alipay/notify
+```
+
+通知会同时核对：
+
+- 支付宝签名
+- `APP_ID`
+- 商户订单号
+- 支付金额
+- 支付宝交易号
+
+只有全部正确，Worker 才会把订单标记为已付款。
+
+每个支付宝支付订单的有效时间为 30 分钟。超时后顾客需要重新下单。
+
+如果顾客从微信内置浏览器打开页面，微信可能阻止唤起支付宝。这种情况下需要提示顾客点击右上角，改用系统浏览器打开。普通手机浏览器会进入支付宝 App 或支付宝网页收银台。
+
+## 12. 日常使用
+
+顾客访问首页完成下单和付款。商家访问：
+
+```text
+https://你的域名/admin/
+```
+
+后台可以：
+
+- 查看待付款、制作中、待取餐和已取餐订单
+- 手动确认收款作为特殊情况下的备用操作
+- 更新制作状态
+- 新增和修改商品
+- 上架或下架商品
+
+金额在数据库中始终以“分”为单位保存，避免浮点金额误差。
+
+## 13. 本地开发（可选）
+
+创建 `.dev.vars`，仅用于本地开发：
+
+```text
+ADMIN_TOKEN="本地后台口令"
+ALIPAY_APP_ID="你的 APP_ID"
+ALIPAY_APP_PRIVATE_KEY="你的 PKCS#8 应用私钥"
+ALIPAY_PUBLIC_KEY="支付宝公钥"
+PUBLIC_BASE_URL="http://localhost:8787"
+```
+
+`.dev.vars` 已加入 `.gitignore`，不要强制提交。
 
 初始化本地 D1：
 
@@ -291,55 +307,55 @@ npm test
 npx wrangler d1 execute bakery-db --local --file=./schema.sql
 ```
 
-启动本地 Worker：
+检查并启动：
 
 ```bash
+npm run check
+npm test
 npm run dev
 ```
 
-Wrangler 会显示本地访问地址，通常是：
-
-```text
-http://localhost:8787
-```
-
-也可以登录 Cloudflare 后从本机部署：
-
-```bash
-npx wrangler login
-npm run deploy
-```
+本地地址通常是 `http://localhost:8787`。支付宝无法从公网回调 localhost，因此完整支付通知必须在 HTTPS 测试域名或正式域名上验证。
 
 ## 常见问题
 
-### `/api/products` 返回 `D1 binding DB 未配置`
+### 提交订单后提示“下单失败”
 
-检查 `wrangler.jsonc` 是否包含真实的 D1 `database_id`，并确认绑定名称是 `DB`，然后重新部署。
+查看 Worker Logs，检查三个支付宝配置是否存在。已有数据库还要确认执行过 `migrations/0001_alipay_wap.sql`。
 
-### 后台提示 `ADMIN_TOKEN 尚未配置`
+### 应用私钥格式错误
 
-在 Worker 的 **Settings → Variables and Secrets** 中创建名为 `ADMIN_TOKEN` 的 Secret，然后部署新版本。
+代码需要 PKCS#8 私钥，即 `BEGIN PRIVATE KEY`。如果文件开头是 `BEGIN RSA PRIVATE KEY`，请使用支付宝密钥工具重新生成 PKCS#8 密钥，或在本机安全转换后再保存为 Secret。
 
-### 页面能打开，但 `/api/*` 返回 404
+### 支付宝提示签名错误
 
-确认部署命令是 `npx wrangler deploy`，并确认 `wrangler.jsonc` 中包含：
+检查：
 
-```jsonc
-"main": "./src/index.js",
-"run_worker_first": ["/api", "/api/*"]
-```
+- `ALIPAY_APP_ID` 是否属于当前应用。
+- `ALIPAY_APP_PRIVATE_KEY` 是否与上传给支付宝的应用公钥配对。
+- 加签方式是否为 RSA2 普通公钥模式。
+- Secret 内容是否被截断或粘贴错误。
 
-### 修改代码后没有自动上线
+### 支付成功，但后台仍是待付款
 
-检查 Worker 的 **Settings → Builds** 是否连接了正确仓库和 `main` 分支，并查看最新一次 Build 的日志。
+检查 Worker Logs 中 `/api/payment/alipay/notify` 的请求。常见原因：
 
-## 当前 MVP 没有包含
+- `ALIPAY_PUBLIC_KEY` 错填成了应用公钥。
+- 数据库没有执行支付迁移。
+- `PUBLIC_BASE_URL` 与实际域名不一致。
+- 支付宝应用没有登记或允许当前域名。
 
-- 支付宝支付 API / 自动确认到账
+### 后台提示未授权
+
+确认输入的是 Cloudflare 中保存的 `ADMIN_TOKEN`，不是支付宝应用私钥。
+
+## 当前版本尚未包含
+
+- 自动退款和关闭支付宝交易
 - 短信或微信通知
 - 自动配送
 - 每日库存扣减
 - 预约时间段容量限制
-- 登录会员
+- 会员登录
 
-这些功能可以在订单流程跑通以后逐步增加。
+这些功能可以在订单和支付流程稳定后逐步增加。

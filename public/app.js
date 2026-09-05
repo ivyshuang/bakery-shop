@@ -6,6 +6,66 @@ const state = {
 
 const $ = (selector) => document.querySelector(selector);
 const money = (cents) => `¥${(Number(cents) / 100).toFixed(2)}`;
+const pendingOrderKey = 'bakery_pending_order';
+
+function readPendingOrder() {
+  try {
+    return JSON.parse(sessionStorage.getItem(pendingOrderKey) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function showOrderDialog(order, message) {
+  $('#pickupCode').textContent = order.pickup_code;
+  $('#successTotal').textContent = money(order.total_cents);
+  $('#successMessage').textContent = message;
+  const dialog = $('#successDialog');
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open', '');
+}
+
+async function refreshPaymentStatus(order) {
+  const status = $('#paymentState');
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const query = new URLSearchParams({ pickup_code: order.pickup_code });
+      const res = await fetch(`/api/order/${order.order_id}/status?${query}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '读取支付状态失败');
+      if (data.order.payment_status === 'paid') {
+        status.textContent = '支付宝付款成功';
+        status.classList.add('paid');
+        $('#successTitle').textContent = '付款成功';
+        $('#continuePayment').hidden = true;
+        sessionStorage.removeItem(pendingOrderKey);
+        return;
+      }
+    } catch (error) {
+      console.error(error);
+      break;
+    }
+    if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  status.textContent = '暂未收到支付宝付款通知';
+  status.classList.remove('paid');
+  $('#continuePayment').hidden = !order.payment_url;
+}
+
+async function handlePaymentReturn() {
+  const payment = new URLSearchParams(location.search).get('payment');
+  if (!['return', 'cancel'].includes(payment)) return;
+  const order = readPendingOrder();
+  if (!order) return;
+
+  showOrderDialog(
+    order,
+    payment === 'cancel' ? '支付尚未完成，你可以继续付款' : '请保存下面的取餐码'
+  );
+  await refreshPaymentStatus(order);
+  history.replaceState(null, '', location.pathname);
+}
 
 async function loadProducts() {
   const list = $('#productList');
@@ -107,16 +167,19 @@ async function submitOrder() {
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '下单失败');
+    if (!data.payment_url) throw new Error('未获得支付宝支付地址');
 
-    $('#pickupCode').textContent = data.pickup_code;
-    $('#successTotal').textContent = money(data.total_cents);
-    const dialog = $('#successDialog');
-    if (typeof dialog.showModal === 'function') dialog.showModal();
-    else dialog.setAttribute('open', '');
+    sessionStorage.setItem(pendingOrderKey, JSON.stringify({
+      order_id: data.order_id,
+      pickup_code: data.pickup_code,
+      total_cents: data.total_cents,
+      payment_url: data.payment_url
+    }));
 
     state.quantities.clear();
     document.querySelectorAll('.qty-value').forEach((el) => el.textContent = '0');
     document.querySelectorAll('.product').forEach((el) => el.classList.remove('selected'));
+    window.location.assign(data.payment_url);
   } catch (error) {
     alert(error.message);
   } finally {
@@ -133,4 +196,9 @@ function escapeHtml(value) {
 
 $('#submitOrder').addEventListener('click', submitOrder);
 $('#closeSuccess').addEventListener('click', () => $('#successDialog').close());
+$('#continuePayment').addEventListener('click', () => {
+  const order = readPendingOrder();
+  if (order?.payment_url) window.location.assign(order.payment_url);
+});
 loadProducts();
+handlePaymentReturn();

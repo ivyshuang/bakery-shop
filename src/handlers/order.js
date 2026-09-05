@@ -1,3 +1,9 @@
+import {
+  assertAlipayConfig,
+  createAlipayWapUrl,
+  importAlipayPrivateKey
+} from '../payments/alipay.js';
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -22,22 +28,31 @@ function makePickupCode() {
   return code;
 }
 
+function makeOutTradeNo() {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  const random = [...bytes].map((value) => value.toString(16).padStart(2, '0')).join('');
+  return `BAKERY${Date.now().toString(36).toUpperCase()}${random.toUpperCase()}`;
+}
+
 async function insertOrderWithUniqueCode(env, order, validItems, total) {
   for (let attempt = 0; attempt < 5; attempt++) {
     const pickupCode = makePickupCode();
+    const outTradeNo = makeOutTradeNo();
 
     try {
       const orderInsert = await env.DB.prepare(`
         INSERT INTO orders
-          (pickup_code, customer_name, phone, pickup_slot, note, total_cents)
-        VALUES (?, ?, ?, ?, ?, ?)
+          (pickup_code, customer_name, phone, pickup_slot, note, total_cents, alipay_out_trade_no)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `).bind(
         pickupCode,
         order.customerName,
         order.phone,
         order.pickupSlot,
         order.note,
-        total
+        total,
+        outTradeNo
       ).run();
 
       const orderId = orderInsert.meta?.last_row_id;
@@ -57,7 +72,7 @@ async function insertOrderWithUniqueCode(env, order, validItems, total) {
 
       if (itemStatements.length) await env.DB.batch(itemStatements);
 
-      return { orderId, pickupCode };
+      return { orderId, pickupCode, outTradeNo };
     } catch (error) {
       const message = String(error?.message || error);
       if (message.includes('UNIQUE') && message.includes('pickup_code')) continue;
@@ -72,6 +87,8 @@ export async function createOrder({ request, env }) {
   if (!env.DB) return json({ error: 'D1 binding DB 未配置' }, 500);
 
   try {
+    assertAlipayConfig(env);
+    const privateKey = await importAlipayPrivateKey(env.ALIPAY_APP_PRIVATE_KEY);
     const body = await request.json();
     const customerName = cleanText(body.name, 40);
     const phone = cleanText(body.phone, 30);
@@ -115,18 +132,30 @@ export async function createOrder({ request, env }) {
 
     if (total <= 0 || total > 10000000) return json({ error: '订单金额异常' }, 400);
 
-    const { orderId, pickupCode } = await insertOrderWithUniqueCode(
+    const { orderId, pickupCode, outTradeNo } = await insertOrderWithUniqueCode(
       env,
       { customerName, phone, pickupSlot, note },
       validItems,
       total
     );
+    const paymentUrl = await createAlipayWapUrl({
+      env,
+      privateKey,
+      requestUrl: request.url,
+      order: {
+        id: orderId,
+        pickupCode,
+        outTradeNo,
+        totalCents: total
+      }
+    });
 
     return json({
       success: true,
       order_id: orderId,
       pickup_code: pickupCode,
       total_cents: total,
+      payment_url: paymentUrl,
       payment_status: 'pending',
       order_status: 'new'
     }, 201);

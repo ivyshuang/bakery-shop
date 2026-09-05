@@ -19,7 +19,7 @@
     <section class="notice card">
       <div>
         <strong>自提说明</strong>
-        <p>下单后请使用支付宝扫码付款。商家确认后开始制作。</p>
+        <p>提交订单后将跳转到支付宝，确认金额并完成付款。</p>
       </div>
     </section>
 
@@ -53,15 +53,13 @@
 
   <dialog id="successDialog" class="success-dialog">
     <div class="success-icon">✓</div>
-    <h2>下单成功</h2>
-    <p class="muted">请截图保存下面的取餐码</p>
+    <h2 id="successTitle">订单已提交</h2>
+    <p id="successMessage" class="muted">请保存下面的取餐码</p>
     <div id="pickupCode" class="pickup-code">-----</div>
     <div class="amount-row"><span>应付金额</span><strong id="successTotal">¥0.00</strong></div>
-    <div class="qr-wrap">
-      <img src="/assets/alipay-qr.svg" alt="支付宝收款码" />
-      <p>请使用支付宝扫码付款</p>
-    </div>
-    <div class="tip">付款后由商家人工确认。取餐时请出示取餐码。</div>
+    <div id="paymentState" class="payment-state">正在确认支付结果…</div>
+    <div class="tip">支付结果以支付宝通知为准。取餐时请出示取餐码。</div>
+    <button id="continuePayment" class="primary dialog-action" hidden>继续支付宝付款</button>
     <button id="closeSuccess" class="secondary">知道了</button>
   </dialog>
 

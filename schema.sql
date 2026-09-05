@@ -20,8 +20,11 @@ CREATE TABLE IF NOT EXISTS orders (
   pickup_slot TEXT NOT NULL DEFAULT '',
   note TEXT NOT NULL DEFAULT '',
   total_cents INTEGER NOT NULL CHECK (total_cents >= 0),
+  alipay_out_trade_no TEXT,
+  alipay_trade_no TEXT,
   payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending','paid')),
   order_status TEXT NOT NULL DEFAULT 'new' CHECK (order_status IN ('new','preparing','ready','completed','cancelled')),
+  paid_at TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -39,6 +42,7 @@ CREATE TABLE IF NOT EXISTS order_items (
 CREATE INDEX IF NOT EXISTS idx_orders_pickup_code ON orders(pickup_code);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(order_status, payment_status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_alipay_out_trade_no ON orders(alipay_out_trade_no);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 
 INSERT INTO products (name, description, price_cents, emoji, sort_order)

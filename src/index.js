@@ -4,6 +4,7 @@ import { getAdminProducts, createProduct } from './handlers/admin/products.js';
 import { updateProduct } from './handlers/admin/product.js';
 import { getOrders } from './handlers/admin/orders.js';
 import { updateOrder } from './handlers/admin/order.js';
+import { getOrderPaymentStatus, handleAlipayNotification } from './handlers/payment.js';
 
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
@@ -46,6 +47,17 @@ async function routeApi(request, env) {
   if (path === '/api/order') {
     if (method !== 'POST') return methodNotAllowed(['POST']);
     return createOrder({ request, env });
+  }
+
+  if (path === '/api/payment/alipay/notify') {
+    if (method !== 'POST') return methodNotAllowed(['POST']);
+    return handleAlipayNotification({ request, env });
+  }
+
+  const orderStatusMatch = path.match(/^\/api\/order\/(\d+)\/status$/);
+  if (orderStatusMatch) {
+    if (method !== 'GET') return methodNotAllowed(['GET']);
+    return getOrderPaymentStatus({ request, env, params: { id: orderStatusMatch[1] } });
   }
 
   if (path === '/api/admin/products') {
