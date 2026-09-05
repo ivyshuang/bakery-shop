@@ -5,6 +5,14 @@
   "compatibility_date": "2026-09-05",
   "workers_dev": true,
   "keep_vars": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bakery-db",
+      "database_id": "126cd2a4-1eb9-40ef-9f21-068447ccac87"
+    }
+  ],
+  
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
