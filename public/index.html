@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f1e8" />
+  <title>今日烘焙 · 在线下单</title>
+  <meta name="description" content="今日现烤，在线下单，到店自提。" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="eyebrow">TODAY'S BAKE</div>
+      <h1>今日烘焙</h1>
+      <p>少量现烤 · 售完即止 · 下单后凭取餐码自提</p>
+    </header>
+
+    <section class="notice card">
+      <div>
+        <strong>自提说明</strong>
+        <p>下单后请使用支付宝扫码付款。商家确认后开始制作。</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">
+        <h2>今天有什么</h2>
+        <span id="productCount">加载中…</span>
+      </div>
+      <div id="productList" class="products" aria-live="polite"></div>
+    </section>
+
+    <section class="checkout card">
+      <div class="section-title">
+        <h2>取餐信息</h2>
+        <span>带 * 为必填</span>
+      </div>
+      <label>姓名 *<input id="name" autocomplete="name" maxlength="40" placeholder="怎么称呼你" /></label>
+      <label>手机号 / 微信号 *<input id="phone" autocomplete="tel" maxlength="30" placeholder="方便核对订单" /></label>
+      <label>预计取餐时间<input id="pickupSlot" maxlength="60" placeholder="例如：今天 18:30 左右" /></label>
+      <label>备注<textarea id="note" maxlength="300" rows="3" placeholder="例如：不要纸袋 / 口味备注"></textarea></label>
+    </section>
+
+    <section class="order-bar card">
+      <div>
+        <span class="muted">合计</span>
+        <strong id="total">¥0.00</strong>
+      </div>
+      <button id="submitOrder" class="primary" disabled>请选择商品</button>
+    </section>
+  </main>
+
+  <dialog id="successDialog" class="success-dialog">
+    <div class="success-icon">✓</div>
+    <h2>下单成功</h2>
+    <p class="muted">请截图保存下面的取餐码</p>
+    <div id="pickupCode" class="pickup-code">-----</div>
+    <div class="amount-row"><span>应付金额</span><strong id="successTotal">¥0.00</strong></div>
+    <div class="qr-wrap">
+      <img src="/assets/alipay-qr.svg" alt="支付宝收款码" />
+      <p>请使用支付宝扫码付款</p>
+    </div>
+    <div class="tip">付款后由商家人工确认。取餐时请出示取餐码。</div>
+    <button id="closeSuccess" class="secondary">知道了</button>
+  </dialog>
+
+  <template id="productTemplate">
+    <article class="product card">
+      <div class="product-emoji"></div>
+      <div class="product-copy">
+        <h3></h3>
+        <p></p>
+        <strong class="price"></strong>
+      </div>
+      <div class="qty">
+        <button class="minus" aria-label="减少">−</button>
+        <span class="qty-value">0</span>
+        <button class="plus" aria-label="增加">＋</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

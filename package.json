@@ -1,0 +1,10 @@
+{
+  "name": "bakery-shop-pages",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal bakery ordering MVP for Cloudflare Pages + Functions + D1",
+  "scripts": {
+    "check": "node scripts/check.mjs"
+  }
+}

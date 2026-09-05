@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>烘焙后台</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/admin/admin.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <div>
+        <div class="eyebrow">BAKERY ADMIN</div>
+        <h1>订单后台</h1>
+      </div>
+      <button id="changeToken" class="ghost">更换后台口令</button>
+    </header>
+
+    <section id="loginCard" class="admin-card login-card">
+      <h2>输入后台口令</h2>
+      <p>这是你在 Cloudflare Pages 环境变量里设置的 <code>ADMIN_TOKEN</code>。</p>
+      <div class="inline-form">
+        <input id="tokenInput" type="password" autocomplete="current-password" placeholder="ADMIN_TOKEN" />
+        <button id="saveToken" class="primary">进入后台</button>
+      </div>
+    </section>
+
+    <div id="adminApp" hidden>
+      <nav class="tabs">
+        <button class="tab active" data-tab="orders">订单</button>
+        <button class="tab" data-tab="products">商品</button>
+      </nav>
+
+      <section id="ordersTab">
+        <div class="toolbar admin-card">
+          <input id="search" placeholder="搜索取餐码 / 姓名 / 手机" />
+          <select id="statusFilter">
+            <option value="">全部订单状态</option>
+            <option value="new">新订单</option>
+            <option value="preparing">制作中</option>
+            <option value="ready">待取餐</option>
+            <option value="completed">已取餐</option>
+            <option value="cancelled">已取消</option>
+          </select>
+          <select id="paymentFilter">
+            <option value="">全部付款状态</option>
+            <option value="pending">待付款</option>
+            <option value="paid">已付款</option>
+          </select>
+          <button id="refreshOrders" class="ghost">刷新</button>
+        </div>
+        <div id="summary" class="summary-grid"></div>
+        <div id="orders" class="order-list"></div>
+      </section>
+
+      <section id="productsTab" hidden>
+        <div class="admin-card product-form">
+          <h2>新增商品</h2>
+          <div class="product-form-grid">
+            <input id="newEmoji" value="🥐" maxlength="8" aria-label="emoji" />
+            <input id="newName" placeholder="商品名" />
+            <input id="newPrice" type="number" step="0.01" min="0" placeholder="价格，例如 12" />
+            <input id="newDescription" placeholder="描述" />
+            <button id="addProduct" class="primary">新增</button>
+          </div>
+        </div>
+        <div id="productsAdmin" class="order-list"></div>
+      </section>
+    </div>
+  </main>
+  <script src="/admin/admin.js" defer></script>
+</body>
+</html>

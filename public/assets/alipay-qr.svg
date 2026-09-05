@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <rect width="600" height="600" rx="36" fill="#ffffff"/>
+  <rect x="18" y="18" width="564" height="564" rx="28" fill="none" stroke="#d8d8d8" stroke-width="8" stroke-dasharray="18 12"/>
+  <text x="300" y="260" text-anchor="middle" font-size="46" font-family="sans-serif" fill="#1677ff">支付宝收款码</text>
+  <text x="300" y="330" text-anchor="middle" font-size="28" font-family="sans-serif" fill="#666666">请用你自己的二维码图片替换我</text>
+  <text x="300" y="380" text-anchor="middle" font-size="22" font-family="sans-serif" fill="#999999">public/assets/alipay-qr.svg</text>
+</svg>
