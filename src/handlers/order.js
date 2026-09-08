@@ -19,13 +19,12 @@ function cleanText(value, max = 100) {
 }
 
 function makePickupCode() {
-  // 去掉容易看错的 0/O/1/I。
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const bytes = new Uint8Array(5);
-  crypto.getRandomValues(bytes);
-  let code = '';
-  for (const b of bytes) code += chars[b % chars.length];
-  return code;
+  // 使用四位数字，保留前导零；拒绝采样避免取模偏差。
+  const bytes = new Uint16Array(1);
+  do {
+    crypto.getRandomValues(bytes);
+  } while (bytes[0] >= 60000);
+  return String(bytes[0] % 10000).padStart(4, '0');
 }
 
 function makeOutTradeNo() {
