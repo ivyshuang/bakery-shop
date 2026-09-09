@@ -1,3 +1,4 @@
+import { parseImage } from '../../product-image.js';
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -12,7 +13,7 @@ export async function getAdminProducts({ env }) {
   if (!env.DB) return json({ error: 'D1 binding DB 未配置' }, 500);
   try {
     const { results } = await env.DB.prepare(`
-      SELECT id, name, description, price_cents, emoji, active, sort_order
+      SELECT id, name, description, price_cents, emoji, CASE WHEN image_data != '' THEN '/api/product/' || id || '/image' ELSE '' END AS image_url, active, sort_order
       FROM products
       ORDER BY sort_order ASC, id ASC
     `).all();
@@ -27,6 +28,8 @@ export async function createProduct({ request, env }) {
   if (!env.DB) return json({ error: 'D1 binding DB 未配置' }, 500);
   try {
     const body = await request.json();
+    const imageData = body.image_data ?? '';
+    try { parseImage(imageData); } catch (error) { return json({ error: error.message }, 400); }
     const name = String(body.name || '').trim().slice(0, 60);
     const description = String(body.description || '').trim().slice(0, 200);
     const emoji = String(body.emoji || '🥐').trim().slice(0, 8) || '🥐';
@@ -39,9 +42,9 @@ export async function createProduct({ request, env }) {
     }
 
     const result = await env.DB.prepare(`
-      INSERT INTO products (name, description, price_cents, emoji, sort_order)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(name, description, priceCents, emoji, sortOrder).run();
+      INSERT INTO products (name, description, price_cents, emoji, sort_order, image_data)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(name, description, priceCents, emoji, sortOrder, imageData).run();
 
     return json({ success: true, id: result.meta?.last_row_id }, 201);
   } catch (error) {

@@ -13,7 +13,7 @@ export async function getProducts({ env }) {
 
   try {
     const { results } = await env.DB.prepare(`
-      SELECT id, name, description, price_cents, emoji
+      SELECT id, name, description, price_cents, emoji, CASE WHEN image_data != '' THEN '/api/product/' || id || '/image' ELSE '' END AS image_url
       FROM products
       WHERE active = 1
       ORDER BY sort_order ASC, id ASC

@@ -5,6 +5,7 @@ const jsFiles = [
   "public/app.js",
   "public/admin/admin.js",
   "src/index.js",
+  "src/product-image.js",
   "src/handlers/products.js",
   "src/handlers/order.js",
   "src/handlers/payment.js",

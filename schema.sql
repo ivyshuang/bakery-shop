@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS products (
   name TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   price_cents INTEGER NOT NULL CHECK (price_cents >= 0),
+  image_data TEXT NOT NULL DEFAULT '',
   emoji TEXT NOT NULL DEFAULT '🥐',
   active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0,1)),
   sort_order INTEGER NOT NULL DEFAULT 0,

@@ -58,7 +58,7 @@
         <div class="admin-card product-form">
           <h2>新增商品</h2>
           <div class="product-form-grid">
-            <input id="newEmoji" value="🥐" maxlength="8" aria-label="emoji" />
+            <label class="image-picker">商品图片<img hidden alt="新商品图片预览" /><input id="newImage" type="file" accept="image/jpeg,image/png,image/webp" /><small>选择图片后预览，新增时保存</small></label>
             <input id="newName" placeholder="商品名" />
             <input id="newPrice" type="number" step="0.01" min="0" placeholder="价格，例如 12" />
             <input id="newDescription" placeholder="描述" />

@@ -153,7 +153,7 @@ function renderProducts(products) {
   }
   root.innerHTML = products.map(p => `
     <article class="order-card product-admin-row" data-product-id="${p.id}">
-      <input class="emoji" value="${escapeAttr(p.emoji || '🥐')}" maxlength="8" aria-label="emoji" />
+      <label class="image-picker">商品图片<img ${p.image_url ? `src="${escapeAttr(p.image_url)}"` : 'hidden'} alt="商品图片预览" /><input class="image-file" type="file" accept="image/jpeg,image/png,image/webp" /><small>选择图片后点击保存</small></label>
       <input class="name" value="${escapeAttr(p.name)}" aria-label="商品名" />
       <input class="price-input" type="number" step="0.01" min="0" value="${(p.price_cents / 100).toFixed(2)}" aria-label="价格" />
       <input class="desc" value="${escapeAttr(p.description || '')}" aria-label="描述" />
@@ -162,6 +162,7 @@ function renderProducts(products) {
     </article>
   `).join('');
 
+  root.querySelectorAll('.image-file').forEach(setupImagePicker);
   root.querySelectorAll('.save-product').forEach(button => {
     button.addEventListener('click', async () => {
       const row = button.closest('[data-product-id]');
@@ -174,7 +175,7 @@ function renderProducts(products) {
           method:'PATCH',
           headers:{ 'Content-Type':'application/json' },
           body:JSON.stringify({
-            emoji:row.querySelector('.emoji').value,
+            image_data:row.querySelector('.image-file').imageData,
             name:row.querySelector('.name').value,
             price_cents:Math.round(price * 100),
             description:row.querySelector('.desc').value,
@@ -204,12 +205,15 @@ async function addProduct() {
       method:'POST',
       headers:{ 'Content-Type':'application/json' },
       body:JSON.stringify({
-        emoji:$('#newEmoji').value,
+        image_data:$('#newImage').imageData,
         name:$('#newName').value,
         price_cents:Math.round(price * 100),
         description:$('#newDescription').value
       })
     });
+    $('#newImage').value = '';
+    $('#newImage').imageData = undefined;
+    $('#newImage').closest('label').querySelector('img').hidden = true;
     $('#newName').value = '';
     $('#newPrice').value = '';
     $('#newDescription').value = '';
@@ -225,6 +229,39 @@ function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));
 }
 function escapeAttr(value) { return escapeHtml(value).replace(/`/g, '&#096;'); }
+
+function setupImagePicker(input) {
+  input.addEventListener('change', async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const button = input.closest('.product-admin-row')?.querySelector('.save-product') || $('#addProduct');
+    button.disabled = true;
+    try {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('请选择 JPG、PNG 或 WebP 图片');
+      if (file.size > 20 * 1024 * 1024) throw new Error('原图不能超过 20 MB');
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, 1000 / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      const data = canvas.toDataURL('image/jpeg', 0.8);
+      if (data.length > 680000) throw new Error('压缩后图片仍过大，请选择较小的图片');
+      input.imageData = data;
+      const preview = input.closest('label').querySelector('img');
+      preview.src = data;
+      preview.hidden = false;
+    } catch (error) {
+      input.value = '';
+      alert(error.message || '无法读取图片，请重新选择');
+    } finally { button.disabled = false; }
+  });
+}
+setupImagePicker($('#newImage'));
 
 $('#saveToken').addEventListener('click', enterAdmin);
 $('#tokenInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') enterAdmin(); });

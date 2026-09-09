@@ -1,3 +1,4 @@
+import { getProductImage } from './product-image.js';
 import { getProducts } from './handlers/products.js';
 import { createOrder } from './handlers/order.js';
 import { getAdminProducts, createProduct } from './handlers/admin/products.js';
@@ -37,6 +38,12 @@ async function routeApi(request, env) {
   if (path.startsWith('/api/admin/')) {
     const unauthorized = authorizeAdmin(request, env);
     if (unauthorized) return unauthorized;
+  }
+
+  const imageMatch = path.match(/^\/api\/product\/(\d+)\/image$/);
+  if (imageMatch) {
+    if (method !== 'GET') return methodNotAllowed(['GET']);
+    return getProductImage({ env, params: { id: imageMatch[1] } });
   }
 
   if (path === '/api/products') {

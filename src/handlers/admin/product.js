@@ -1,3 +1,4 @@
+import { parseImage } from '../../product-image.js';
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -18,6 +19,10 @@ export async function updateProduct({ request, env, params }) {
     const fields = [];
     const binds = [];
 
+    if (body.image_data !== undefined) {
+      try { parseImage(body.image_data); } catch (error) { return json({ error: error.message }, 400); }
+      fields.push('image_data = ?'); binds.push(body.image_data);
+    }
     if (body.name !== undefined) {
       const value = String(body.name).trim().slice(0, 60);
       if (!value) return json({ error: '商品名不能为空' }, 400);

@@ -96,7 +96,13 @@ function renderProducts() {
     const node = template.content.cloneNode(true);
     const article = node.querySelector('.product');
     article.dataset.id = product.id;
-    node.querySelector('.product-emoji').textContent = product.emoji || '🥐';
+    const image = node.querySelector('.product-image img');
+    if (product.image_url) {
+      image.src = product.image_url;
+      image.alt = product.name;
+      image.hidden = false;
+      image.addEventListener('error', () => { image.hidden = true; });
+    }
     node.querySelector('h3').textContent = product.name;
     node.querySelector('.product-copy p').textContent = product.description || '今日现烤';
     node.querySelector('.price').textContent = money(product.price_cents);

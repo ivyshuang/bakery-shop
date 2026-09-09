@@ -359,3 +359,16 @@ npm run dev
 - 会员登录
 
 这些功能可以在订单和支付流程稳定后逐步增加。
+
+### 商品图片
+
+后台「商品」支持选择 JPG、PNG、WebP 图片，预览后点击「新增」或「保存」。原图最多 20 MB，浏览器会缩小到最长边 1000 像素并压缩为 JPEG，保存后不超过 500 KB。图片随商品保存在 D1，前台通过独立图片接口加载；没有上传图片时显示「暂无图片」。替换图片后刷新前台即可看到新图。
+
+已有数据库在部署本次代码前执行一次（不要重复执行；新建数据库使用最新 schema.sql 即可）：
+
+```bash
+npx wrangler d1 execute bakery-db --remote --file=./migrations/0002_product_images.sql
+npm run deploy
+```
+
+本地已有数据库将 `--remote` 改为 `--local`。
