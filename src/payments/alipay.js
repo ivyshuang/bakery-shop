@@ -127,7 +127,7 @@ export async function createAlipayWapUrl({ env, privateKey, order, requestUrl })
     biz_content: JSON.stringify({
       out_trade_no: order.outTradeNo,
       total_amount: (order.totalCents / 100).toFixed(2),
-      subject: `今日烘焙订单 ${order.pickupCode}`,
+      subject: `RO·今日烘焙订单 ${order.pickupCode}`,
       product_code: 'QUICK_WAP_PAY',
       timeout_express: '30m',
       quit_url: `${origin}/?payment=cancel&order_id=${order.id}`
