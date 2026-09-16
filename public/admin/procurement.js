@@ -110,7 +110,7 @@
     const selectOptions = supplies.map(s => `<option value="${s.id}" ${s.id === p.supply_id ? 'selected' : ''}>${e(supplyLabel(s))}</option>`).join('');
     const form = openDialog(p.id ? '采购详情 / 编辑' : '新增采购', `
       <label class="full-width">采购类型<select name="purchase_type" required><option value="">请选择</option>${options(types, p.purchase_type)}</select></label>
-      <fieldset class="inline-supply full-width" hidden disabled><legend>持续采购物品</legend><label>物品<select name="supply_id"><option value="">请选择物品</option>${selectOptions}<option value="new">＋ 新建物品</option></select></label></fieldset>
+      <fieldset class="inline-supply full-width" hidden disabled><legend>持续采购物品</legend><label>物品<select name="supply_id"><option value="">请选择物品</option>${selectOptions}<option value="new">＋ 新建物品</option></select></label><div class="new-supply-fields procurement-fields" hidden>${supplyFields()}</div></fieldset>
       <div class="one-time-fields procurement-fields full-width">${input('物品名称', 'item_name', p.name, 'required maxlength="100"')}${input('规格（选填）', 'specification', p.specification, 'maxlength="200"')}<label>分类<select name="category" required><option value="">请选择</option>${options(categories,p.category)}</select></label>${input('计量单位', 'unit', p.unit, 'required maxlength="20" placeholder="例如：个、克、盒"')}</div>
       ${input('数量', 'quantity', p.quantity, 'required type="number" min="0.000001" max="1000000000" step="any"')}
       ${input('实付金额（元）', 'amount', p.id ? (p.amount_cents / 100).toFixed(2) : '', 'required type="number" min="0" max="10000000000" step="0.01"')}
@@ -125,9 +125,10 @@
     const choice = form.elements.supply_id;
     const type = form.elements.purchase_type;
     const oneTime = form.querySelector('.one-time-fields');
-    type.onchange = () => { const recurring = type.value === 'RECURRING'; inline.hidden = inline.disabled = !recurring; oneTime.hidden = recurring; oneTime.querySelectorAll('input,select').forEach(x => x.disabled = recurring); if (recurring) choice.required = true; else choice.required = false; };
+    const newFields = inline.querySelector('.new-supply-fields');
+    type.onchange = () => { const recurring = type.value === 'RECURRING'; inline.hidden = inline.disabled = !recurring; oneTime.hidden = recurring; oneTime.querySelectorAll('input,select').forEach(x => x.disabled = recurring); choice.required = recurring; newFields.hidden = choice.value !== 'new'; newFields.querySelectorAll('input,select').forEach(x => x.disabled = choice.value !== 'new' || !recurring); };
     type.value = p.purchase_type || 'ONE_TIME'; type.onchange();
-    choice.onchange = () => { if (choice.value === 'new') { inline.querySelector('select').value = 'new'; } };
+    choice.onchange = () => { newFields.hidden = choice.value !== 'new'; newFields.querySelectorAll('input,select').forEach(x => x.disabled = choice.value !== 'new' || type.value !== 'RECURRING'); };
     let imageData;
     const preview = form.querySelector('.screenshot-preview img');
     const remove = form.querySelector('[data-remove-image]');
