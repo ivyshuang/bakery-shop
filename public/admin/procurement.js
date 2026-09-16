@@ -119,7 +119,7 @@
       ${input('店铺', 'shop', p.shop, 'required maxlength="100"')}
       ${input('订单号（选填）', 'order_number', p.order_number, 'maxlength="100"')}
       <label class="full-width">商品链接（选填）<input name="product_url" type="url" value="${e(p.product_url || '')}" maxlength="2000" />${p.product_url ? `<a href="${e(p.product_url)}" target="_blank" rel="noopener noreferrer">打开商品链接</a>` : ''}</label>
-      <label class="full-width">采购凭证（选填）<input name="screenshot" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" /><small>支持 JPG、PNG、WebP 或 PDF，原文件最多 2 MB。</small></label>
+      <label class="full-width">采购凭证（选填）<input name="screenshot" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" /><small>支持 JPG、PNG、WebP 或 PDF，原文件最多 10 MB。</small></label>
       <div class="full-width screenshot-preview"><img alt="订单截图" hidden /><button class="ghost" type="button" data-remove-image hidden>移除截图</button><p role="status" data-image-status></p></div>`);
     const inline = form.querySelector('.inline-supply');
     const choice = form.elements.supply_id;
@@ -142,7 +142,7 @@
       const current = ++revision;
       readingImage = true;
       try {
-        if (!['image/jpeg','image/png','image/webp','application/pdf'].includes(file.type) || file.size > 2 * 1024 * 1024) throw new Error('请选择不超过 2 MB 的 JPG、PNG、WebP 或 PDF 文件');
+        if (!['image/jpeg','image/png','image/webp','application/pdf'].includes(file.type) || file.size > 10 * 1024 * 1024) throw new Error('请选择不超过 10 MB 的 JPG、PNG、WebP 或 PDF 文件');
         const data = await new Promise((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('文件读取失败')); reader.readAsDataURL(file); });
         if (current !== revision) return;
         imageData = data; form.dataset.fileName = file.name; preview.hidden = remove.hidden = file.type === 'application/pdf'; if (file.type !== 'application/pdf') preview.src = data; imageStatus.textContent = file.type === 'application/pdf' ? `已选择 PDF：${file.name}` : '';

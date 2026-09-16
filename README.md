@@ -375,7 +375,7 @@ npm run deploy
 
 ### 采购台账
 
-采购凭证原文件保存到 R2 bucket `bakery-procurement-files`，D1 保存关联元数据。部署前在 Cloudflare R2 创建该 bucket，并执行 `migrations/0005_procurement_files_r2.sql`；本地未配置 R2 时仍兼容读取旧的 D1 图片。
+采购凭证原文件保存到 R2 bucket `bakery-procurement-files`，D1 保存关联元数据。支持 JPG、PNG、WebP 和 PDF，单个原文件最多 10 MB，不做压缩。部署前在 Cloudflare R2 创建该 bucket，并执行 `migrations/0005_procurement_files_r2.sql`；本地未配置 R2 时仍兼容读取旧的 D1 图片。
 
 
 后台「采购」包含采购记录和物品清单。物品清单只保存持续采购、未来需要关联库存的物品；一次性采购只存在于采购记录中。采购支持新增、编辑、按物品搜索和查看历次购买，录入持续采购时可以直接新建物品。此版本不包含备注、库存位置、库存余额或消耗流水。

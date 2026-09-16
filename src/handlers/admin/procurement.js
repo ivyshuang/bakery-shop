@@ -51,7 +51,7 @@ async function storeR2File(env, data, name = '') {
   const match = String(data).match(/^data:(image\/(?:jpeg|png|webp)|application\/pdf);base64,([A-Za-z0-9+/=]+)$/);
   if (!match) throw new Error('文件格式不支持');
   const bytes = Uint8Array.from(atob(match[2]), c => c.charCodeAt(0));
-  if (bytes.length > 2 * 1024 * 1024) throw new Error('文件不能超过 2 MB');
+  if (bytes.length > 10 * 1024 * 1024) throw new Error('文件不能超过 10 MB');
   const key = `procurement/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}`;
   const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('');
   await env.PROCUREMENT_FILES.put(key, bytes, { httpMetadata: { contentType: match[1], contentDisposition: `inline; filename="${String(name || '凭证').replace(/[^\w.-]+/g, '_')}"` } });
