@@ -18,7 +18,7 @@ export function validateSupply(body) {
   if (body.purchase_type && !['ONE_TIME', 'RECURRING'].includes(body.purchase_type)) throw new Error('请选择采购类型');
   return values;
 }
-export function validatePurchase(body) {
+export function validatePurchase(body, allowLargeFile = false) {
   if (!body.purchase_type) body.purchase_type = 'RECURRING';
   if (!['ONE_TIME', 'RECURRING'].includes(body.purchase_type)) throw new Error('请选择采购类型');
   if (body.purchase_type === 'RECURRING' && (!Number.isSafeInteger(body.supply_id) || body.supply_id < 1)) throw new Error('请选择持续采购物品');
@@ -36,7 +36,7 @@ export function validatePurchase(body) {
   const order = field(body, 'order_number', 100);
   const date = field(body, 'purchased_on', 10, true);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) throw new Error('购买日期不正确');
-  if (body.image_data !== undefined && body.image_data !== '' && !String(body.image_data).startsWith('data:application/pdf;')) parseImage(body.image_data);
+  if (body.image_data !== undefined && body.image_data !== '' && !String(body.image_data).startsWith('data:application/pdf;') && !allowLargeFile) parseImage(body.image_data);
   const itemName = field(body, 'item_name', 100);
   const specification = field(body, 'specification', 200);
   const category = field(body, 'category', 20);
@@ -88,7 +88,7 @@ export async function procurement({ request, env, resource, id, image }) {
   try {
     body = await request.json();
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('请求内容不正确');
-    values = resource === 'supplies' ? validateSupply(body) : validatePurchase(body);
+    values = resource === 'supplies' ? validateSupply(body) : validatePurchase(body, Boolean(env.PROCUREMENT_FILES));
   } catch (error) { return json({ error: error.message || '请求内容不正确' }, 400); }
   if (resource === 'purchases' && body.purchase_type === 'RECURRING') {
     const supply = await env.DB.prepare('SELECT id FROM supplies WHERE id = ?').bind(body.supply_id).first();
