@@ -1,6 +1,7 @@
 import { parseImage } from '../../product-image.js';
 
 const categories = ['INGREDIENT', 'PACKAGING', 'CONSUMABLE', 'TOOL', 'EQUIPMENT', 'OTHER'];
+const categoryAliases = { '原料': 'INGREDIENT', '包装耗材': 'PACKAGING', '日常耗材': 'CONSUMABLE', '工具': 'TOOL', '设备': 'EQUIPMENT', '其他': 'OTHER' };
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
 });
@@ -13,7 +14,7 @@ function field(body, key, max, required = false) {
 }
 export function validateSupply(body) {
   const values = [field(body, 'name', 100, true), field(body, 'specification', 200),
-    field(body, 'category', 20, true), field(body, 'unit', 20, true)];
+    categoryAliases[field(body, 'category', 20, true)] || field(body, 'category', 20, true), field(body, 'unit', 20, true)];
   if (!categories.includes(values[2])) throw new Error('请选择物品分类');
   if (body.purchase_type && !['ONE_TIME', 'RECURRING'].includes(body.purchase_type)) throw new Error('请选择采购类型');
   return values;
@@ -39,7 +40,7 @@ export function validatePurchase(body, allowLargeFile = false) {
   if (body.image_data !== undefined && body.image_data !== '' && !String(body.image_data).startsWith('data:application/pdf;') && !allowLargeFile) parseImage(body.image_data);
   const itemName = field(body, 'item_name', 100);
   const specification = field(body, 'specification', 200);
-  const category = field(body, 'category', 20);
+  const category = categoryAliases[field(body, 'category', 20)] || field(body, 'category', 20);
   const unit = field(body, 'unit', 20);
   if (category && !categories.includes(category)) throw new Error('请选择物品分类');
   return [body.supply_id ?? null, body.purchase_type, itemName, specification, category, unit, body.quantity, body.amount_cents, platform, shop, link, order, date];
