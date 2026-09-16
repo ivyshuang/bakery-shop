@@ -40,7 +40,7 @@ export function validatePurchase(body, allowLargeFile = false) {
   if (body.image_data !== undefined && body.image_data !== '' && !String(body.image_data).startsWith('data:application/pdf;') && !allowLargeFile) parseImage(body.image_data);
   const itemName = field(body, 'item_name', 100);
   const specification = field(body, 'specification', 200);
-  const category = categoryAliases[field(body, 'category', 20)] || field(body, 'category', 20);
+  const category = categoryAliases[field(body, 'category', 20)] || field(body, 'category', 20) || 'OTHER';
   const unit = field(body, 'unit', 20);
   if (category && !categories.includes(category)) throw new Error('请选择物品分类');
   return [body.supply_id ?? null, body.purchase_type, itemName, specification, category, unit, body.quantity, body.amount_cents, platform, shop, link, order, date];

@@ -176,9 +176,10 @@
       const recurring = type.value === 'RECURRING';
       if (recurring) supplyId = Number(choice.value);
       const selected = recurring ? supplies.find(s => s.id === supplyId) : null;
+      const readOneTime = name => oneTime.querySelector(`[name="${name}"]`).value;
       await saveResource('purchases', p.id, {
-        supply_id: supplyId, purchase_type: type.value, item_name: recurring ? selected.name : form.elements.item_name.value,
-        specification: recurring ? selected.specification : form.elements.specification.value, category: recurring ? selected.category : form.elements.category.value, unit: recurring ? selected.unit : form.elements.unit.value,
+        supply_id: supplyId, purchase_type: type.value, item_name: recurring ? selected.name : readOneTime('item_name'),
+        specification: recurring ? selected.specification : readOneTime('specification'), category: recurring ? selected.category : readOneTime('category'), unit: recurring ? selected.unit : readOneTime('unit'),
         quantity: Number(form.elements.quantity.value),
         amount_cents: Math.round(Number(form.elements.amount.value) * 100),
         platform: form.elements.platform.value, shop: form.elements.shop.value,
