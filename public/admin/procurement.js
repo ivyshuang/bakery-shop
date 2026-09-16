@@ -45,17 +45,17 @@
   function render() {
     const isSupply = view === 'supplies';
     find('#newProcurement').textContent = isSupply ? '新增物品' : '新增采购';
-    find('#purchaseTypeFilter').hidden = !isSupply;
+    find('#purchaseTypeFilter').hidden = true;
     find('#clearPurchaseHistory').hidden = isSupply || !historyId;
     root.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
     const q = find('#procurementSearch').value.trim().toLowerCase();
     const filter = find('#purchaseTypeFilter').value;
     const rows = (isSupply ? supplies : purchases).filter(r => `${r.name} ${r.specification}`.toLowerCase().includes(q))
-      .filter(r => isSupply ? !filter || r.purchase_type === filter : !historyId || r.supply_id === Number(historyId));
+      .filter(r => isSupply ? true : !historyId || r.supply_id === Number(historyId));
     const heads = isSupply ? ['物品 / 规格', '分类', '单位', '采购类型', '操作'] : ['日期', '物品 / 规格', '数量', '实付', '平台 / 店铺', '操作'];
     find('#procurementList').innerHTML = rows.length ? `<table class="procurement-table"><thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => {
       const name = `<strong>${e(r.name)}</strong>${r.specification ? `<small>${e(r.specification)}</small>` : ''}`;
-      const cells = isSupply ? [name, e(categories[r.category]), e(r.unit), e(types[r.purchase_type]), `<button class="ghost" data-edit="${r.id}">编辑</button> <button class="ghost" data-history="${r.id}">采购历史</button>`]
+      const cells = isSupply ? [name, e(categories[r.category]), e(r.unit), '持续采购', `<button class="ghost" data-edit="${r.id}">编辑</button> <button class="ghost" data-history="${r.id}">采购历史</button>`]
         : [e(r.purchased_on), name, `${r.quantity} ${e(r.unit)}`, money(r.amount_cents), `${e(r.platform)}<small>${e(r.shop)}</small>`, `<button class="ghost" data-edit="${r.id}">查看 / 编辑</button>`];
       return `<tr>${cells.map((cell,i) => `<td data-label="${heads[i]}">${cell}</td>`).join('')}</tr>`;
     }).join('')}</tbody></table>` : '<p class="message">暂无符合条件的记录</p>';
@@ -65,7 +65,7 @@
       ${input('规格（选填）', 'specification', s.specification, 'maxlength="200"')}
       <label>分类<select name="category" required><option value="">请选择</option>${options(categories,s.category)}</select></label>
       ${input('计量单位', 'unit', s.unit, 'required maxlength="20" placeholder="例如：个、克、盒"')}
-      <label>采购类型<select name="purchase_type" required><option value="">请选择</option>${options(types,s.purchase_type)}</select></label>`;
+      `;
   }
   function openDialog(title, fields) {
     dialog.innerHTML = `<form class="procurement-form"><h2 id="procurementDialogTitle">${title}</h2><div class="procurement-fields">${fields}</div><p class="form-error" role="alert"></p><div class="dialog-buttons"><button type="button" class="ghost" data-close>取消</button><button class="primary" type="submit">保存</button></div></form>`;
@@ -78,7 +78,7 @@
     return api(`/api/admin/${resource}${id ? `/${id}` : ''}`, { method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   }
   function supplyPayload(container) {
-    return Object.fromEntries(['name','specification','category','unit','purchase_type'].map(name => [name,container.querySelector(`[name="${name}"]`).value]));
+    return Object.fromEntries(['name','specification','category','unit'].map(name => [name,container.querySelector(`[name="${name}"]`).value]));
   }
   function bindSubmit(form, save) {
     let saving = false;
@@ -109,8 +109,9 @@
   async function editPurchase(p = {}) {
     const selectOptions = supplies.map(s => `<option value="${s.id}" ${s.id === p.supply_id ? 'selected' : ''}>${e(supplyLabel(s))}</option>`).join('');
     const form = openDialog(p.id ? '采购详情 / 编辑' : '新增采购', `
-      <label class="full-width">物品<select name="supply_id" required><option value="">请选择物品</option>${selectOptions}<option value="new">＋ 新建物品</option></select></label>
-      <fieldset class="inline-supply full-width" hidden disabled><legend>新建物品</legend><div class="procurement-fields">${supplyFields()}</div></fieldset>
+      <label class="full-width">采购类型<select name="purchase_type" required><option value="">请选择</option>${options(types, p.purchase_type)}</select></label>
+      <fieldset class="inline-supply full-width" hidden disabled><legend>持续采购物品</legend><label>物品<select name="supply_id"><option value="">请选择物品</option>${selectOptions}<option value="new">＋ 新建物品</option></select></label></fieldset>
+      <div class="one-time-fields procurement-fields full-width">${input('物品名称', 'item_name', p.name, 'required maxlength="100"')}${input('规格（选填）', 'specification', p.specification, 'maxlength="200"')}<label>分类<select name="category" required><option value="">请选择</option>${options(categories,p.category)}</select></label>${input('计量单位', 'unit', p.unit, 'required maxlength="20" placeholder="例如：个、克、盒"')}</div>
       ${input('数量', 'quantity', p.quantity, 'required type="number" min="0.000001" max="1000000000" step="any"')}
       ${input('实付金额（元）', 'amount', p.id ? (p.amount_cents / 100).toFixed(2) : '', 'required type="number" min="0" max="10000000000" step="0.01"')}
       ${input('购买日期', 'purchased_on', p.purchased_on || localDate(), 'required type="date"')}
@@ -122,8 +123,11 @@
       <div class="full-width screenshot-preview"><img alt="订单截图" hidden /><button class="ghost" type="button" data-remove-image hidden>移除截图</button><p role="status" data-image-status></p></div>`);
     const inline = form.querySelector('.inline-supply');
     const choice = form.elements.supply_id;
-    choice.onchange = () => { inline.hidden = inline.disabled = choice.value !== 'new'; };
-    if (!supplies.length) { choice.value = 'new'; choice.onchange(); }
+    const type = form.elements.purchase_type;
+    const oneTime = form.querySelector('.one-time-fields');
+    type.onchange = () => { const recurring = type.value === 'RECURRING'; inline.hidden = inline.disabled = !recurring; oneTime.hidden = recurring; oneTime.querySelectorAll('input,select').forEach(x => x.disabled = recurring); if (recurring) choice.required = true; else choice.required = false; };
+    type.value = p.purchase_type || 'ONE_TIME'; type.onchange();
+    choice.onchange = () => { if (choice.value === 'new') { inline.querySelector('select').value = 'new'; } };
     let imageData;
     const preview = form.querySelector('.screenshot-preview img');
     const remove = form.querySelector('[data-remove-image]');
@@ -158,8 +162,8 @@
     }
     bindSubmit(form, async () => {
       if (readingImage) throw new Error('截图正在读取，请稍后保存');
-      let supplyId = Number(choice.value);
-      if (choice.value === 'new') {
+      let supplyId = null;
+      if (type.value === 'RECURRING' && choice.value === 'new') {
         const payload = supplyPayload(inline);
         const created = await saveResource('supplies', null, payload);
         supplyId = created.id;
@@ -168,8 +172,13 @@
         choice.add(new Option(supplyLabel(payload), String(supplyId)), 1);
         choice.value = String(supplyId); choice.onchange();
       }
+      const recurring = type.value === 'RECURRING';
+      if (recurring) supplyId = Number(choice.value);
+      const selected = recurring ? supplies.find(s => s.id === supplyId) : null;
       await saveResource('purchases', p.id, {
-        supply_id: supplyId, quantity: Number(form.elements.quantity.value),
+        supply_id: supplyId, purchase_type: type.value, item_name: recurring ? selected.name : form.elements.item_name.value,
+        specification: recurring ? selected.specification : form.elements.specification.value, category: recurring ? selected.category : form.elements.category.value, unit: recurring ? selected.unit : form.elements.unit.value,
+        quantity: Number(form.elements.quantity.value),
         amount_cents: Math.round(Number(form.elements.amount.value) * 100),
         platform: form.elements.platform.value, shop: form.elements.shop.value,
         order_number: form.elements.order_number.value, product_url: form.elements.product_url.value,

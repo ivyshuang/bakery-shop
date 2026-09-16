@@ -64,14 +64,19 @@ CREATE TABLE IF NOT EXISTS supplies (
   specification TEXT NOT NULL DEFAULT '',
   category TEXT NOT NULL CHECK (category IN ('INGREDIENT','PACKAGING','CONSUMABLE','TOOL','EQUIPMENT','OTHER')),
   unit TEXT NOT NULL,
-  purchase_type TEXT NOT NULL CHECK (purchase_type IN ('ONE_TIME','RECURRING')),
+  purchase_type TEXT NOT NULL DEFAULT 'RECURRING' CHECK (purchase_type IN ('ONE_TIME','RECURRING')),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS purchase_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  supply_id INTEGER NOT NULL REFERENCES supplies(id),
+  supply_id INTEGER REFERENCES supplies(id),
+  purchase_type TEXT NOT NULL CHECK (purchase_type IN ('ONE_TIME','RECURRING')),
+  item_name TEXT NOT NULL,
+  specification TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL CHECK (category IN ('INGREDIENT','PACKAGING','CONSUMABLE','TOOL','EQUIPMENT','OTHER')),
+  unit TEXT NOT NULL,
   quantity REAL NOT NULL CHECK (quantity > 0),
   amount_cents INTEGER NOT NULL CHECK (amount_cents >= 0),
   platform TEXT NOT NULL,
