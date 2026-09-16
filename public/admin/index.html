@@ -12,7 +12,7 @@
     <header class="admin-header">
       <div>
         <div class="eyebrow">BAKERY ADMIN</div>
-        <h1>订单后台</h1>
+        <h1>店铺后台</h1>
       </div>
       <button id="changeToken" class="ghost">更换后台口令</button>
     </header>
@@ -30,6 +30,7 @@
       <nav class="tabs">
         <button class="tab active" data-tab="orders">订单</button>
         <button class="tab" data-tab="products">商品</button>
+        <button class="tab" data-tab="procurement">采购</button>
       </nav>
 
       <section id="ordersTab">
@@ -67,8 +68,10 @@
         </div>
         <div id="productsAdmin" class="order-list"></div>
       </section>
+      <section id="procurementTab" hidden></section>
     </div>
   </main>
   <script src="/admin/admin.js" defer></script>
+  <script src="/admin/procurement.js" defer></script>
 </body>
 </html>

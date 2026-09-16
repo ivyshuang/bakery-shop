@@ -279,6 +279,8 @@ document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', (
   const which = tab.dataset.tab;
   $('#ordersTab').hidden = which !== 'orders';
   $('#productsTab').hidden = which !== 'products';
+  $('#procurementTab').hidden = which !== 'procurement';
+  if (which === 'procurement') window.loadProcurement();
   if (which === 'products') loadProducts();
 }));
 

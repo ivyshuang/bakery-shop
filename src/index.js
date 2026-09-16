@@ -1,3 +1,4 @@
+import { procurement } from './handlers/admin/procurement.js';
 import { getProductImage } from './product-image.js';
 import { getProducts } from './handlers/products.js';
 import { createOrder } from './handlers/order.js';
@@ -38,6 +39,11 @@ async function routeApi(request, env) {
   if (path.startsWith('/api/admin/')) {
     const unauthorized = authorizeAdmin(request, env);
     if (unauthorized) return unauthorized;
+  }
+
+  const procurementMatch = path.match(/^\/api\/admin\/(supplies|purchases)(?:\/(\d+)(\/image)?)?$/);
+  if (procurementMatch && !(procurementMatch[1] === 'supplies' && procurementMatch[3])) {
+    return procurement({ request, env, resource: procurementMatch[1], id: procurementMatch[2], image: Boolean(procurementMatch[3]) });
   }
 
   const imageMatch = path.match(/^\/api\/product\/(\d+)\/image$/);

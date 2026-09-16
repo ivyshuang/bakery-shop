@@ -4,6 +4,8 @@ import fs from "node:fs";
 const jsFiles = [
   "public/app.js",
   "public/admin/admin.js",
+  "public/admin/procurement.js",
+  "src/handlers/admin/procurement.js",
   "src/index.js",
   "src/product-image.js",
   "src/handlers/products.js",
