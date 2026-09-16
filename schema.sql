@@ -85,6 +85,11 @@ CREATE TABLE IF NOT EXISTS purchase_records (
   order_number TEXT NOT NULL DEFAULT '',
   purchased_on TEXT NOT NULL,
   image_data TEXT NOT NULL DEFAULT '',
+  file_key TEXT NOT NULL DEFAULT '',
+  file_name TEXT NOT NULL DEFAULT '',
+  file_type TEXT NOT NULL DEFAULT '',
+  file_size INTEGER NOT NULL DEFAULT 0,
+  file_hash TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
