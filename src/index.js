@@ -1,5 +1,6 @@
 import { procurement } from './handlers/admin/procurement.js';
 import { decisions } from './handlers/admin/decisions.js';
+import { founderRecords } from './handlers/admin/founder-records.js';
 import { getProductImage } from './product-image.js';
 import { getProducts } from './handlers/products.js';
 import { createOrder } from './handlers/order.js';
@@ -50,6 +51,11 @@ async function routeApi(request, env) {
   const decisionMatch = path.match(/^\/api\/admin\/decisions(?:\/(\d+))?$/);
   if (decisionMatch) {
     return decisions({ request, env, id: decisionMatch[1] });
+  }
+
+  const founderMatch = path.match(/^\/api\/admin\/founder\/(expenses|assets)(?:\/(\d+))?$/);
+  if (founderMatch) {
+    return founderRecords({ request, env, resource: founderMatch[1], id: founderMatch[2] });
   }
 
   const imageMatch = path.match(/^\/api\/product\/(\d+)\/image$/);

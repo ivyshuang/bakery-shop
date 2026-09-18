@@ -409,3 +409,16 @@ npm run deploy
 ```
 
 本地已有数据库使用 `--local` 替换 `--remote`。
+
+### 创始人记录
+
+后台「创始人记录」分为「代垫支出」和「个人资产」两个表。代垫支出会分别保存原始付款、退款和自动计算的净支出；个人资产用于记录个人购买、未来可能投入企业的设备或车辆。两者与企业采购表分开。
+
+已有数据库应先执行本次迁移，再发布代码；新数据库直接使用完整 `schema.sql`：
+
+```bash
+npx wrangler d1 execute bakery-db --remote --file=./migrations/0007_founder_records.sql
+npm run deploy
+```
+
+本地已有数据库使用 `--local` 替换 `--remote`。迁移可重复执行。

@@ -280,8 +280,10 @@ document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', (
   $('#ordersTab').hidden = which !== 'orders';
   $('#productsTab').hidden = which !== 'products';
   $('#procurementTab').hidden = which !== 'procurement';
+  $('#founderTab').hidden = which !== 'founder';
   $('#decisionsTab').hidden = which !== 'decisions';
   if (which === 'procurement') window.loadProcurement();
+  if (which === 'founder') window.loadFounderRecords();
   if (which === 'decisions') window.loadDecisions();
   if (which === 'products') loadProducts();
 }));
