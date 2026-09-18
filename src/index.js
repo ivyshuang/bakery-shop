@@ -53,9 +53,9 @@ async function routeApi(request, env) {
     return decisions({ request, env, id: decisionMatch[1] });
   }
 
-  const founderMatch = path.match(/^\/api\/admin\/founder\/(expenses|assets)(?:\/(\d+))?$/);
+  const founderMatch = path.match(/^\/api\/admin\/founder\/expenses(?:\/(\d+)(\/file)?)?$/);
   if (founderMatch) {
-    return founderRecords({ request, env, resource: founderMatch[1], id: founderMatch[2] });
+    return founderRecords({ request, env, id: founderMatch[1], file: Boolean(founderMatch[2]) });
   }
 
   const imageMatch = path.match(/^\/api\/product\/(\d+)\/image$/);

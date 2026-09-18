@@ -20,8 +20,7 @@ test('founder records preserve gross payment, refunds and net expense', async t 
   assert.equal(result.records[0].gross_paid_cents, 40000);
   assert.equal(result.records[0].refunded_cents, 20000);
   assert.equal(result.records[0].net_amount_cents, 20000);
-  assert.equal((await call('founder/assets', 'POST', { name: '电动三轮车', acquired_on: '2026-09-08', amount_cents: 350000, current_owner: '创始人个人', payment_method: '支付宝', payment_reference: 'asset-pay-1', intended_use: '未来企业活动', future_handling: '拟投入或转让企业', status: 'PERSONAL', evidence_note: '电子发票' })).status, 201);
-  assert.equal((await call('founder/assets', undefined, undefined, false)).status, 401);
+  assert.equal((await call('founder/expenses', undefined, undefined, false)).status, 401);
 });
 
 test('founder record validation rejects refunds above payment and bad methods', async t => {
