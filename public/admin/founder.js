@@ -3,7 +3,7 @@
   const e = escapeHtml;
   let records = [], receipts = [], view = 'expenses';
   const accepted = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'application/ofd', 'application/xml', 'text/xml'];
-  root.innerHTML = `<div class="decision-intro admin-card"><div><h2>垫资与凭证</h2><p>上传订单 PDF 或手动填写一条记录；邮箱收到的凭证先进入待关联区。</p></div><div class="founder-new-actions"><button type="button" class="ghost" id="newFounderManual">手动新增</button><button type="button" class="primary" id="newFounderExpense">上传订单 PDF</button></div></div>
+  root.innerHTML = `<div class="decision-intro admin-card"><div><h2>垫资与凭证</h2><p>上传订单 PDF 即建立记录；邮箱收到的凭证先进入待关联区。</p></div><button type="button" class="primary" id="newFounderExpense">上传订单 PDF</button></div>
     <div class="procurement-controls"><div class="purchase-tabs"><button class="ghost" data-founder-view="expenses" aria-pressed="true">垫资记录</button><button class="ghost" data-founder-view="receipts" aria-pressed="false">邮箱凭证</button></div><button class="ghost" id="refreshFounder">刷新</button></div>
     <p id="founderStatus" role="status"></p><div id="founderList" class="decision-list"></div>`;
   const dialog = document.createElement('dialog'); dialog.className = 'procurement-dialog'; document.body.append(dialog);
@@ -37,8 +37,9 @@
   window.loadFounderRecords = load;
   function uploadDialog({ expenseId } = {}) {
     const quick = !expenseId;
-    dialog.innerHTML = `<form class="procurement-form"><h2>${quick ? '上传订单 PDF' : '补充附件'}</h2><div class="procurement-fields"><label class="full-width">选择文件<input name="files" type="file" ${quick ? 'accept="application/pdf"' : 'multiple accept="image/jpeg,image/png,image/webp,application/pdf,application/ofd,application/xml,text/xml"'} required /><small>${quick ? '上传成功后会立即建立一条垫资记录。' : '可一次选择多个文件，每个不超过 10 MB。'}</small></label></div><p class="form-error" role="alert"></p><p data-progress role="status"></p><div class="dialog-buttons"><button type="button" class="ghost" data-close>取消</button><button type="submit" class="primary">上传</button></div></form>`;
+    dialog.innerHTML = `<form class="procurement-form"><h2>${quick ? '上传订单 PDF' : '补充附件'}</h2><div class="procurement-fields"><label class="full-width">选择文件<input name="files" type="file" ${quick ? 'accept="application/pdf"' : 'multiple accept="image/jpeg,image/png,image/webp,application/pdf,application/ofd,application/xml,text/xml"'} required /><small>${quick ? '上传成功后会立即建立一条垫资记录。' : '可一次选择多个文件，每个不超过 10 MB。'}</small></label></div><p class="form-error" role="alert"></p><p data-progress role="status"></p><div class="dialog-buttons"><button type="button" class="ghost" data-close>取消</button>${quick ? '<button type="button" class="ghost" data-manual>暂不上传，手动新增</button>' : ''}<button type="submit" class="primary">上传</button></div></form>`;
     const form = dialog.querySelector('form'); form.querySelector('[data-close]').onclick = () => dialog.close();
+    form.querySelector('[data-manual]')?.addEventListener('click', () => { dialog.close(); manualDialog(); });
     form.onsubmit = async event => {
       event.preventDefault(); const files = [...form.elements.files.files]; const error = form.querySelector('.form-error'); const progress = form.querySelector('[data-progress]'); if (!files.length) return;
       const invalid = files.find(file => file.size > 10 * 1024 * 1024 || (quick ? file.type !== 'application/pdf' : !accepted.includes(file.type))); if (invalid) { error.textContent = `${invalid.name} 格式不支持或超过 10 MB`; return; }
@@ -67,7 +68,6 @@
   root.addEventListener('click', async event => {
     const button = event.target.closest('button'); if (!button) return;
     if (button.dataset.founderView) { view = button.dataset.founderView; render(); return; }
-    if (button.id === 'newFounderManual') return manualDialog();
     if (button.id === 'newFounderExpense') return uploadDialog();
     if (button.id === 'refreshFounder') return load();
     if (button.dataset.addFiles) return uploadDialog({ expenseId: Number(button.dataset.addFiles) });
