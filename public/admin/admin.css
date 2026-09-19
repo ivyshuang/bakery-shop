@@ -135,6 +135,12 @@ code { background:transparent; padding:2px 5px; border-radius:5px; }
 .receipt-link { display:flex; gap:8px; align-items:center; margin-top:12px; }
 .receipt-link select { flex:1; min-width:0; border:1px solid #d4d4d4; padding:10px; background:#fff; }
 .linked-note { color:#737373; margin:12px 0 0; }
+.dialog-hint { color:#737373; margin-top:-8px; }
+.receipt-picker { display:grid; gap:8px; max-height:50vh; overflow:auto; }
+.receipt-picker-row { display:flex; gap:10px; align-items:flex-start; border:1px solid #e5e5e5; border-radius:6px; padding:11px; cursor:pointer; }
+.receipt-picker-row input { margin-top:3px; }
+.receipt-picker-row span { display:grid; gap:4px; min-width:0; }
+.receipt-picker-row small { color:#737373; overflow-wrap:anywhere; }
 .decision-form textarea { min-width:0; width:100%; resize:vertical; border:1px solid #d4d4d4; border-radius:6px; padding:10px; font:inherit; color:#262626; }
 .decision-form label:not(:nth-child(-n+3)) { grid-column:1/-1; }
 @media(max-width:760px) {

@@ -22,7 +22,7 @@
     if (view === 'expenses') {
       find('#founderList').innerHTML = records.length ? records.map(record => `<article class="decision-card"><header><div><span class="decision-date">${e(record.spent_on)}</span><h3>${e(record.title)}</h3></div><span class="decision-status">${record.files.length} 个文件</span></header>
         <div class="simple-file-list">${record.files.length ? record.files.map(file => `<button type="button" class="ghost" data-expense-file="${file.id}" data-expense="${record.id}">${e(file.file_name)} · ${e(size(file.file_size))}</button>`).join('') : '<span>暂无文件</span>'}</div>
-        <div class="decision-actions"><button class="ghost" data-add-files="${record.id}">补充附件</button><button class="ghost danger" data-delete="${record.id}">删除记录</button></div></article>`).join('') : '<p class="message">还没有垫资记录，上传一份订单 PDF 即可创建。</p>';
+        <div class="decision-actions"><button class="ghost" data-add-files="${record.id}">添加邮箱凭证</button><button class="ghost danger" data-delete="${record.id}">删除记录</button></div></article>`).join('') : '<p class="message">还没有垫资记录，上传一份订单 PDF 即可创建。</p>';
       return;
     }
     find('#founderList').innerHTML = receipts.length ? receipts.map(receipt => `<article class="decision-card"><header><div><span class="decision-date">${e(receipt.received_at || receipt.created_at)}</span><h3>${e(receipt.subject || '无主题邮件')}</h3><small>${e(receipt.sender)}</small></div><span class="decision-status">${receipt.status === 'LINKED' ? '已归档' : '待关联'}</span></header>
@@ -52,6 +52,21 @@
     };
     dialog.showModal();
   }
+  function emailLinkDialog(expenseId) {
+    const pending = receipts.filter(receipt => receipt.status === 'PENDING' && receipt.files.length);
+    if (!pending.length) { alert('邮箱凭证区暂无待关联文件。请先把发票或付款凭证发送到 receipts@你的域名。'); return; }
+    dialog.innerHTML = `<form class="procurement-form"><h2>添加邮箱凭证</h2><p class="dialog-hint">选择要归入这条垫资记录的邮件，邮件中的附件会一起关联。</p><div class="receipt-picker">${pending.map(receipt => `<label class="receipt-picker-row"><input type="checkbox" name="receipt" value="${receipt.id}" /><span><strong>${e(receipt.subject || '无主题邮件')}</strong><small>${e(receipt.received_at || receipt.created_at)} · ${e(receipt.sender)}</small><small>${receipt.files.map(file => e(file.file_name)).join('、')}</small></span></label>`).join('')}</div><p class="form-error" role="alert"></p><p data-progress role="status"></p><div class="dialog-buttons"><button type="button" class="ghost" data-close>取消</button><button type="submit" class="primary">关联选中文件</button></div></form>`;
+    const form = dialog.querySelector('form'); const progress = form.querySelector('[data-progress]');
+    form.querySelector('[data-close]').onclick = () => dialog.close();
+    form.onsubmit = async event => {
+      event.preventDefault(); const selected = [...form.querySelectorAll('input[name="receipt"]:checked')].map(input => Number(input.value)); const error = form.querySelector('.form-error');
+      if (!selected.length) { error.textContent = '请至少选择一封邮箱凭证'; return; }
+      form.querySelectorAll('button').forEach(button => button.disabled = true);
+      try { for (let index = 0; index < selected.length; index++) { progress.textContent = `正在关联 ${index + 1}/${selected.length}`; await api(`/api/admin/founder/receipts/${selected[index]}/link`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ expense_id: expenseId }) }); } dialog.close(); await load(); }
+      catch (linkError) { error.textContent = linkError.message; form.querySelectorAll('button').forEach(button => button.disabled = false); }
+    };
+    dialog.showModal();
+  }
   function manualDialog() {
     dialog.innerHTML = `<form class="procurement-form"><h2>手动新增垫资</h2><div class="procurement-fields"><label>项目名称<input name="title" required maxlength="160" placeholder="例如：线下购买三轮车" /></label><label>支出日期<input name="spent_on" type="date" required value="${new Date().toISOString().slice(0, 10)}" /></label><label>金额（元）<input name="gross_paid" type="number" min="0" step="0.01" value="0" /></label><label class="full-width">备注<textarea name="evidence_note" rows="2" maxlength="2000" placeholder="可稍后补充订单号、付款方式等信息"></textarea></label></div><p class="form-error" role="alert"></p><div class="dialog-buttons"><button type="button" class="ghost" data-close>取消</button><button type="submit" class="primary">创建记录</button></div></form>`;
     const form = dialog.querySelector('form'); form.querySelector('[data-close]').onclick = () => dialog.close();
@@ -70,7 +85,7 @@
     if (button.dataset.founderView) { view = button.dataset.founderView; render(); return; }
     if (button.id === 'newFounderExpense') return uploadDialog();
     if (button.id === 'refreshFounder') return load();
-    if (button.dataset.addFiles) return uploadDialog({ expenseId: Number(button.dataset.addFiles) });
+    if (button.dataset.addFiles) return emailLinkDialog(Number(button.dataset.addFiles));
     if (button.dataset.expenseFile) { const record = records.find(item => item.id === Number(button.dataset.expense)); const file = record.files.find(item => item.id === Number(button.dataset.expenseFile)); return download(`/api/admin/founder/expenses/${record.id}/files/${file.id}`, file.file_name).catch(error => alert(error.message)); }
     if (button.dataset.receiptFile) { const receipt = receipts.find(item => item.id === Number(button.dataset.receipt)); const file = receipt.files.find(item => item.id === Number(button.dataset.receiptFile)); return download(`/api/admin/founder/receipts/${receipt.id}/files/${file.id}`, file.file_name).catch(error => alert(error.message)); }
     if (button.dataset.linkReceipt) { const select = button.closest('.receipt-link').querySelector('select'); if (!select.value) return alert('请先选择垫资记录'); button.disabled = true; try { await api(`/api/admin/founder/receipts/${button.dataset.linkReceipt}/link`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ expense_id: Number(select.value) }) }); await load(); } catch (error) { alert(error.message); button.disabled = false; } return; }
