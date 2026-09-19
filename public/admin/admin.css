@@ -131,6 +131,7 @@ code { background:transparent; padding:2px 5px; border-radius:5px; }
 .decision-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 .decision-actions .danger { color:#a12622; }
 .simple-file-list { display:flex; flex-wrap:wrap; gap:8px; padding:14px 0; color:#737373; }
+.founder-new-actions { display:flex; gap:8px; flex-wrap:wrap; }
 .simple-file-list .ghost { padding:7px 9px; max-width:100%; overflow-wrap:anywhere; }
 .receipt-link { display:flex; gap:8px; align-items:center; margin-top:12px; }
 .receipt-link select { flex:1; min-width:0; border:1px solid #d4d4d4; padding:10px; background:#fff; }

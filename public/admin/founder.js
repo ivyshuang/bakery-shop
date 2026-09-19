@@ -3,7 +3,7 @@
   const e = escapeHtml;
   let records = [], receipts = [], view = 'expenses';
   const accepted = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'application/ofd', 'application/xml', 'text/xml'];
-  root.innerHTML = `<div class="decision-intro admin-card"><div><h2>垫资与凭证</h2><p>上传订单 PDF 即建立记录；邮箱收到的凭证先进入待关联区。</p></div><button type="button" class="primary" id="newFounderExpense">上传订单 PDF</button></div>
+  root.innerHTML = `<div class="decision-intro admin-card"><div><h2>垫资与凭证</h2><p>上传订单 PDF 或手动填写一条记录；邮箱收到的凭证先进入待关联区。</p></div><div class="founder-new-actions"><button type="button" class="ghost" id="newFounderManual">手动新增</button><button type="button" class="primary" id="newFounderExpense">上传订单 PDF</button></div></div>
     <div class="procurement-controls"><div class="purchase-tabs"><button class="ghost" data-founder-view="expenses" aria-pressed="true">垫资记录</button><button class="ghost" data-founder-view="receipts" aria-pressed="false">邮箱凭证</button></div><button class="ghost" id="refreshFounder">刷新</button></div>
     <p id="founderStatus" role="status"></p><div id="founderList" class="decision-list"></div>`;
   const dialog = document.createElement('dialog'); dialog.className = 'procurement-dialog'; document.body.append(dialog);
@@ -51,9 +51,23 @@
     };
     dialog.showModal();
   }
+  function manualDialog() {
+    dialog.innerHTML = `<form class="procurement-form"><h2>手动新增垫资</h2><div class="procurement-fields"><label>项目名称<input name="title" required maxlength="160" placeholder="例如：线下购买三轮车" /></label><label>支出日期<input name="spent_on" type="date" required value="${new Date().toISOString().slice(0, 10)}" /></label><label>金额（元）<input name="gross_paid" type="number" min="0" step="0.01" value="0" /></label><label class="full-width">备注<textarea name="evidence_note" rows="2" maxlength="2000" placeholder="可稍后补充订单号、付款方式等信息"></textarea></label></div><p class="form-error" role="alert"></p><div class="dialog-buttons"><button type="button" class="ghost" data-close>取消</button><button type="submit" class="primary">创建记录</button></div></form>`;
+    const form = dialog.querySelector('form'); form.querySelector('[data-close]').onclick = () => dialog.close();
+    form.onsubmit = async event => {
+      event.preventDefault(); const button = form.querySelector('[type="submit"]'); const error = form.querySelector('.form-error'); button.disabled = true;
+      try {
+        const amount = Number(form.elements.gross_paid.value); if (!Number.isFinite(amount) || amount < 0) throw new Error('金额不正确');
+        await api('/api/admin/founder/expenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ spent_on: form.elements.spent_on.value, title: form.elements.title.value, category: 'PREPARATION', gross_paid_cents: Math.round(amount * 100), refunded_cents: 0, payment_method: '', payee: '', payment_reference: '', refund_reference: '', purpose: '', outcome: '', disposal: '', business_relevance: 1, status: 'PENDING_CONVERSION', decision_id: '', evidence_note: form.elements.evidence_note.value }) });
+        dialog.close(); await load();
+      } catch (saveError) { error.textContent = saveError.message; button.disabled = false; }
+    };
+    dialog.showModal();
+  }
   root.addEventListener('click', async event => {
     const button = event.target.closest('button'); if (!button) return;
     if (button.dataset.founderView) { view = button.dataset.founderView; render(); return; }
+    if (button.id === 'newFounderManual') return manualDialog();
     if (button.id === 'newFounderExpense') return uploadDialog();
     if (button.id === 'refreshFounder') return load();
     if (button.dataset.addFiles) return uploadDialog({ expenseId: Number(button.dataset.addFiles) });
