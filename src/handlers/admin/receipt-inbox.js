@@ -39,5 +39,21 @@ export async function receiptInbox({ request, env, id, fileId, link }) {
     await env.DB.prepare("UPDATE receipt_emails SET status = 'LINKED', linked_expense_id = ? WHERE id = ?").bind(expenseId, emailId).run();
     return json({ success: true });
   }
+  if (method === 'DELETE') {
+    const email = await env.DB.prepare('SELECT * FROM receipt_emails WHERE id = ?').bind(emailId).first();
+    if (!email) return json({ error: '邮件不存在' }, 404);
+    if (email.status === 'LINKED') return json({ error: '已归入垫资的邮件不能删除，请先解除关联' }, 409);
+    const { results: files } = await env.DB.prepare('SELECT file_key FROM receipt_email_files WHERE email_id = ?').bind(emailId).all();
+    try {
+      if (env.PROCUREMENT_FILES?.delete) {
+        await env.PROCUREMENT_FILES.delete(email.raw_key);
+        await Promise.all((files || []).map(file => env.PROCUREMENT_FILES.delete(file.file_key)));
+      }
+      await env.DB.prepare('DELETE FROM receipt_emails WHERE id = ?').bind(emailId).run();
+      return json({ success: true });
+    } catch (error) {
+      return json({ error: `文件删除失败，数据库记录未删除：${error.message || '请稍后重试'}` }, 500);
+    }
+  }
   return json({ error: 'API 路由不存在' }, 404);
 }

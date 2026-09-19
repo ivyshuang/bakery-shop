@@ -63,6 +63,9 @@ test('receipt email attachments stay pending until linked to an expense', async 
   inbox = await (await call('founder/receipts')).json();
   assert.equal(inbox.records[0].status, 'PENDING');
   assert.equal(inbox.records[0].files[0].file_name, 'proof.pdf');
+  assert.equal((await call(`founder/receipts/${inbox.records[0].id}`, 'DELETE')).status, 200);
+  const emptyInbox = await (await call('founder/receipts')).json();
+  assert.equal(emptyInbox.records.length, 0);
 });
 
 test('founder receipt migrations work with the current remote expense shape', () => {
