@@ -412,13 +412,24 @@ npm run deploy
 
 ### 创始人记录
 
-后台「创始人记录」只保存「代垫支出」。原始付款、退款和自动计算的净支出保存在同一条记录中；发票、付款截图和退款记录可上传为凭证文件。个人购买但未来服务于企业的设备或车辆，也只按代垫支出记录，不建立个人资产台账。
+后台「创始人记录」分为两部分：在「垫资记录」上传一份订单 PDF 就会立即建立记录，之后可以继续补充多个附件；发送到凭证专用地址的邮件会进入「邮箱凭证」，邮件原文和附件先保存但不自动关联，确认后可把整封邮件的附件归入指定垫资记录。文件保存在 R2，D1 只保存邮件、文件元数据及关联关系。
 
 已有数据库应先执行本次迁移，再发布代码；新数据库直接使用完整 `schema.sql`：
 
 ```bash
 npx wrangler d1 execute bakery-db --remote --file=./migrations/0007_founder_records.sql
+npx wrangler d1 execute bakery-db --remote --file=./migrations/0008_founder_expense_files.sql
+npx wrangler d1 execute bakery-db --remote --file=./migrations/0009_receipt_inbox.sql
 npm run deploy
 ```
 
-本地已有数据库使用 `--local` 替换 `--remote`。迁移可重复执行。
+本地已有数据库使用 `--local` 替换 `--remote`。`0008` 和 `0009` 都可以重复执行。当前线上 `founder_expenses` 没有旧版文件列，因此 `0008` 不读取这些不存在的列。
+
+部署完成后，在 Cloudflare 控制台打开 **Compute → Email Service → Email Routing**：
+
+1. 选择当前域名并完成 Onboard Domain，让 Cloudflare 添加收件所需的 MX/TXT 记录。
+2. 在 Routing Rules 创建地址 `receipts@你的域名`。
+3. Action 选择 **Send to a Worker**，Worker 选择本项目的 `bakery-shop`。
+4. 从另一个邮箱发送一封带 PDF 附件的测试邮件。进入后台「创始人记录 → 邮箱凭证」确认邮件和附件已经出现。
+
+Cloudflare Email Routing 在这里承担自动收件和归档，不提供传统邮箱收件箱；如果还希望在个人邮箱中保留副本，可以后续在 Email Worker 中增加转发目的地址。

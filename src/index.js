@@ -1,6 +1,8 @@
 import { procurement } from './handlers/admin/procurement.js';
 import { decisions } from './handlers/admin/decisions.js';
 import { founderRecords } from './handlers/admin/founder-records.js';
+import { receiptInbox } from './handlers/admin/receipt-inbox.js';
+import { receiveReceiptEmail } from './email-receipts.js';
 import { getProductImage } from './product-image.js';
 import { getProducts } from './handlers/products.js';
 import { createOrder } from './handlers/order.js';
@@ -53,9 +55,18 @@ async function routeApi(request, env) {
     return decisions({ request, env, id: decisionMatch[1] });
   }
 
-  const founderMatch = path.match(/^\/api\/admin\/founder\/expenses(?:\/(\d+)(\/file)?)?$/);
+  if (path === '/api/admin/founder/expenses/import') {
+    return founderRecords({ request, env, importOrder: true });
+  }
+
+  const founderMatch = path.match(/^\/api\/admin\/founder\/expenses(?:\/(\d+)(?:\/files(?:\/(\d+))?)?)?$/);
   if (founderMatch) {
-    return founderRecords({ request, env, id: founderMatch[1], file: Boolean(founderMatch[2]) });
+    return founderRecords({ request, env, id: founderMatch[1], files: path.includes('/files'), fileId: founderMatch[2] });
+  }
+
+  const receiptMatch = path.match(/^\/api\/admin\/founder\/receipts(?:\/(\d+)(?:\/(link|files)(?:\/(\d+))?)?)?$/);
+  if (receiptMatch) {
+    return receiptInbox({ request, env, id: receiptMatch[1], link: receiptMatch[2] === 'link', fileId: receiptMatch[2] === 'files' ? receiptMatch[3] : undefined });
   }
 
   const imageMatch = path.match(/^\/api\/product\/(\d+)\/image$/);
@@ -126,5 +137,8 @@ export default {
       console.error('Unhandled Worker error', error);
       return json({ error: '服务器内部错误' }, 500);
     }
+  },
+  async email(message, env, ctx) {
+    await receiveReceiptEmail(message, env, ctx);
   }
 };

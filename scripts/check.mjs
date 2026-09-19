@@ -10,6 +10,8 @@ const jsFiles = [
   "src/handlers/admin/procurement.js",
   "src/handlers/admin/decisions.js",
   "src/handlers/admin/founder-records.js",
+  "src/handlers/admin/receipt-inbox.js",
+  "src/email-receipts.js",
   "src/index.js",
   "src/product-image.js",
   "src/handlers/products.js",
