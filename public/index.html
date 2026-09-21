@@ -16,26 +16,6 @@
       <p>少量现烤 · 售完即止 · 下单后凭取餐码自提</p>
     </header>
 
-    <section class="order-panel card" aria-labelledby="orderPanelTitle">
-      <div class="order-panel-head">
-        <div>
-          <span class="panel-label">当前点餐</span>
-          <h2 id="orderPanelTitle">已选餐品</h2>
-        </div>
-        <span id="selectedCount" class="selected-count">0 件</span>
-      </div>
-      <div id="selectedItems" class="selected-items" aria-live="polite">
-        <div class="order-empty">
-          <strong>还没有选择餐品</strong>
-          <span>点击下方菜单中的“＋”添加</span>
-        </div>
-      </div>
-      <div class="order-panel-total">
-        <span>餐品合计</span>
-        <strong id="panelTotal">¥0.00</strong>
-      </div>
-    </section>
-
     <section class="notice card">
       <div>
         <strong>自提说明</strong>
@@ -92,21 +72,6 @@
         <strong class="price"></strong>
       </div>
       <div class="qty">
-        <button class="minus" aria-label="减少">−</button>
-        <span class="qty-value">0</span>
-        <button class="plus" aria-label="增加">＋</button>
-      </div>
-    </article>
-  </template>
-
-  <template id="selectedItemTemplate">
-    <article class="selected-item">
-      <div class="selected-item-image"><span>无图</span><img hidden /></div>
-      <div class="selected-item-copy">
-        <strong class="selected-item-name"></strong>
-        <span class="selected-item-price"></span>
-      </div>
-      <div class="qty selected-item-qty">
         <button class="minus" aria-label="减少">−</button>
         <span class="qty-value">0</span>
         <button class="plus" aria-label="增加">＋</button>
