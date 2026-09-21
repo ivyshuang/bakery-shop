@@ -159,6 +159,18 @@ function renderOrderDetails(count) {
 
     const row = document.createElement('div');
     row.className = 'order-detail-row';
+    const imageBox = document.createElement('div');
+    imageBox.className = 'order-detail-image';
+    const imagePlaceholder = document.createElement('span');
+    imagePlaceholder.textContent = '无图';
+    imageBox.appendChild(imagePlaceholder);
+    if (product.image_url) {
+      const image = document.createElement('img');
+      image.src = product.image_url;
+      image.alt = product.name;
+      image.addEventListener('error', () => image.remove());
+      imageBox.appendChild(image);
+    }
     const name = document.createElement('span');
     name.textContent = product.name;
     const qty = document.createElement('span');
@@ -166,7 +178,7 @@ function renderOrderDetails(count) {
     qty.textContent = `× ${quantity}`;
     const subtotal = document.createElement('strong');
     subtotal.textContent = money(Number(product.price_cents) * quantity);
-    row.append(name, qty, subtotal);
+    row.append(imageBox, name, qty, subtotal);
     list.appendChild(row);
   }
 
