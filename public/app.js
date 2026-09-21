@@ -139,9 +139,41 @@ function updateSummary() {
     count += qty;
   }
   $('#total').textContent = money(total);
+  renderOrderDetails(count);
   const button = $('#submitOrder');
   button.disabled = count === 0 || state.submitting;
   button.textContent = state.submitting ? '正在提交…' : count ? `提交订单 · ${count} 件` : '请选择商品';
+}
+
+function renderOrderDetails(count) {
+  const details = $('#orderDetails');
+  const list = $('#orderDetailsList');
+  const toggle = $('#orderSummaryToggle');
+  list.innerHTML = '';
+  $('#orderDetailsCount').textContent = `${count} 件`;
+  toggle.disabled = count === 0;
+
+  for (const product of state.products) {
+    const quantity = state.quantities.get(product.id) || 0;
+    if (!quantity) continue;
+
+    const row = document.createElement('div');
+    row.className = 'order-detail-row';
+    const name = document.createElement('span');
+    name.textContent = product.name;
+    const qty = document.createElement('span');
+    qty.className = 'detail-qty';
+    qty.textContent = `× ${quantity}`;
+    const subtotal = document.createElement('strong');
+    subtotal.textContent = money(Number(product.price_cents) * quantity);
+    row.append(name, qty, subtotal);
+    list.appendChild(row);
+  }
+
+  if (count === 0) {
+    details.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+  }
 }
 
 async function submitOrder() {
@@ -201,6 +233,12 @@ function escapeHtml(value) {
 }
 
 $('#submitOrder').addEventListener('click', submitOrder);
+$('#orderSummaryToggle').addEventListener('click', () => {
+  const details = $('#orderDetails');
+  const expanded = $('#orderSummaryToggle').getAttribute('aria-expanded') === 'true';
+  details.hidden = expanded;
+  $('#orderSummaryToggle').setAttribute('aria-expanded', String(!expanded));
+});
 $('#closeSuccess').addEventListener('click', () => $('#successDialog').close());
 $('#continuePayment').addEventListener('click', () => {
   const order = readPendingOrder();

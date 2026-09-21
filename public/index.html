@@ -42,13 +42,22 @@
       <label>备注<textarea id="note" maxlength="300" rows="3" placeholder="例如：不要纸袋 / 口味备注"></textarea></label>
     </section>
 
-    <section class="order-bar card">
-      <div>
-        <span class="muted">合计</span>
-        <strong id="total">¥0.00</strong>
-      </div>
-      <button id="submitOrder" class="primary" disabled>请选择商品</button>
-    </section>
+    <div class="order-dock">
+      <section id="orderDetails" class="order-details" aria-label="已选商品" hidden>
+        <div class="order-details-head">
+          <strong>已选商品</strong>
+          <span id="orderDetailsCount">0 件</span>
+        </div>
+        <div id="orderDetailsList" class="order-details-list"></div>
+      </section>
+      <section class="order-bar">
+        <button id="orderSummaryToggle" class="order-summary-toggle" type="button" aria-expanded="false" aria-controls="orderDetails" disabled>
+          <span class="muted">合计 · 点击查看</span>
+          <strong id="total">¥0.00</strong>
+        </button>
+        <button id="submitOrder" class="primary" disabled>请选择商品</button>
+      </section>
+    </div>
   </main>
 
   <dialog id="successDialog" class="success-dialog">
