@@ -116,6 +116,40 @@ function renderProducts() {
   updateSummary();
 }
 
+function renderSelectedItems() {
+  const list = $('#selectedItems');
+  const template = $('#selectedItemTemplate');
+  const selected = state.products.filter((product) => (state.quantities.get(product.id) || 0) > 0);
+  list.innerHTML = '';
+
+  if (!selected.length) {
+    list.innerHTML = `
+      <div class="order-empty">
+        <strong>还没有选择餐品</strong>
+        <span>点击下方菜单中的“＋”添加</span>
+      </div>`;
+    return;
+  }
+
+  for (const product of selected) {
+    const quantity = state.quantities.get(product.id) || 0;
+    const node = template.content.cloneNode(true);
+    const image = node.querySelector('.selected-item-image img');
+    if (product.image_url) {
+      image.src = product.image_url;
+      image.alt = product.name;
+      image.hidden = false;
+      image.addEventListener('error', () => { image.hidden = true; });
+    }
+    node.querySelector('.selected-item-name').textContent = product.name;
+    node.querySelector('.selected-item-price').textContent = `${money(product.price_cents)} × ${quantity}`;
+    node.querySelector('.qty-value').textContent = String(quantity);
+    node.querySelector('.minus').addEventListener('click', () => changeQty(product.id, -1));
+    node.querySelector('.plus').addEventListener('click', () => changeQty(product.id, 1));
+    list.appendChild(node);
+  }
+}
+
 function changeQty(id, delta) {
   const current = state.quantities.get(id) || 0;
   const next = Math.max(0, Math.min(30, current + delta));
@@ -139,6 +173,9 @@ function updateSummary() {
     count += qty;
   }
   $('#total').textContent = money(total);
+  $('#panelTotal').textContent = money(total);
+  $('#selectedCount').textContent = `${count} 件`;
+  renderSelectedItems();
   const button = $('#submitOrder');
   button.disabled = count === 0 || state.submitting;
   button.textContent = state.submitting ? '正在提交…' : count ? `提交订单 · ${count} 件` : '请选择商品';
