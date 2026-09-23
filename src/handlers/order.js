@@ -95,8 +95,6 @@ export async function createOrder({ request, env }) {
     const note = cleanText(body.note, 300);
     const items = Array.isArray(body.items) ? body.items : [];
 
-    if (!customerName) return json({ error: '请填写姓名' }, 400);
-    if (!phone) return json({ error: '请填写手机号或联系方式' }, 400);
     if (!items.length) return json({ error: '请选择至少一件商品' }, 400);
     if (items.length > 30) return json({ error: '商品种类过多' }, 400);
 

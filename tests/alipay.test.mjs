@@ -63,6 +63,7 @@ test('WAP request parameters receive a valid RSA2 signature', async () => {
 
 test('creating an order returns an amount-bound Alipay WAP URL', async () => {
   const keys = await createTestKeys();
+  let savedOrder;
   const db = {
     prepare(sql) {
       const statement = {
@@ -76,7 +77,10 @@ test('creating an order returns an amount-bound Alipay WAP URL', async () => {
           return null;
         },
         async run() {
-          if (sql.includes('INSERT INTO orders')) return { meta: { last_row_id: 9 } };
+          if (sql.includes('INSERT INTO orders')) {
+            savedOrder = this.values;
+            return { meta: { last_row_id: 9 } };
+          }
           return { meta: { changes: 1 } };
         }
       };
@@ -91,8 +95,6 @@ test('creating an order returns an amount-bound Alipay WAP URL', async () => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      name: '测试顾客',
-      phone: '13800000000',
       items: [{ product_id: 1, quantity: 2 }]
     })
   }), {
@@ -103,6 +105,8 @@ test('creating an order returns an amount-bound Alipay WAP URL', async () => {
   });
 
   assert.equal(response.status, 201);
+  assert.equal(savedOrder[1], '');
+  assert.equal(savedOrder[2], '');
   const result = await response.json();
   const paymentUrl = new URL(result.payment_url);
   const content = JSON.parse(paymentUrl.searchParams.get('biz_content'));

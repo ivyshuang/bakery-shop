@@ -191,11 +191,6 @@ function renderOrderDetails(count) {
 async function submitOrder() {
   if (state.submitting) return;
 
-  const name = $('#name').value.trim();
-  const phone = $('#phone').value.trim();
-  if (!name) return window.storefrontTranslator.alert('请填写姓名');
-  if (!phone) return window.storefrontTranslator.alert('请填写手机号或微信号');
-
   const items = [...state.quantities.entries()].map(([product_id, quantity]) => ({ product_id, quantity }));
   if (!items.length) return;
 
@@ -207,8 +202,6 @@ async function submitOrder() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name,
-        phone,
         pickup_slot: $('#pickupSlot').value.trim(),
         note: $('#note').value.trim(),
         items

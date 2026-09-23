@@ -99,7 +99,7 @@ function renderOrders(orders) {
         </div>
         <div class="items">${items}<div class="item-row"><span>合计</span><strong>${money(order.total_cents)}</strong></div></div>
         <div class="customer">
-          <span>${escapeHtml(order.customer_name)} · ${escapeHtml(order.phone)}</span>
+          ${order.customer_name || order.phone ? `<span>${[order.customer_name, order.phone].filter(Boolean).map(escapeHtml).join(' · ')}</span>` : ''}
           ${order.pickup_slot ? `<span>取餐：${escapeHtml(order.pickup_slot)}</span>` : ''}
           ${order.note ? `<span>备注：${escapeHtml(order.note)}</span>` : ''}
         </div>
