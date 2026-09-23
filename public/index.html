@@ -11,7 +11,11 @@
 <body>
   <main class="shell">
     <header class="hero">
-      <div class="eyebrow">TODAY'S BAKE</div>
+      <div class="hero-top">
+        <div class="eyebrow">TODAY'S BAKE</div>
+        <button id="languageToggle" class="language-toggle" type="button" aria-label="Switch to English" data-no-translate><span data-lang="zh">中</span><span aria-hidden="true">/</span><span data-lang="en">EN</span></button>
+      </div>
+      <div id="languageStatus" class="language-status" role="status" aria-live="polite" data-no-translate hidden></div>
       <h1>RO·今日烘焙</h1>
       <p>少量现烤 · 售完即止 · 下单后凭取餐码自提</p>
     </header>
@@ -88,6 +92,7 @@
     </article>
   </template>
 
+  <script src="/translate.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>

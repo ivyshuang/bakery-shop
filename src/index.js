@@ -5,6 +5,7 @@ import { receiptInbox } from './handlers/admin/receipt-inbox.js';
 import { receiveReceiptEmail } from './email-receipts.js';
 import { getProductImage } from './product-image.js';
 import { getProducts } from './handlers/products.js';
+import { translate } from './handlers/translate.js';
 import { createOrder } from './handlers/order.js';
 import { getAdminProducts, createProduct } from './handlers/admin/products.js';
 import { updateProduct } from './handlers/admin/product.js';
@@ -78,6 +79,11 @@ async function routeApi(request, env) {
   if (path === '/api/products') {
     if (method !== 'GET') return methodNotAllowed(['GET']);
     return getProducts({ request, env });
+  }
+
+  if (path === '/api/translate') {
+    if (method !== 'POST') return methodNotAllowed(['POST']);
+    return translate({ request, env });
   }
 
   if (path === '/api/order') {

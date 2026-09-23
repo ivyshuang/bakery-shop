@@ -15,6 +15,8 @@ const jsFiles = [
   "src/index.js",
   "src/product-image.js",
   "src/handlers/products.js",
+  "src/handlers/translate.js",
+  "public/translate.js",
   "src/handlers/order.js",
   "src/handlers/payment.js",
   "src/payments/alipay.js",

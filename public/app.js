@@ -193,8 +193,8 @@ async function submitOrder() {
 
   const name = $('#name').value.trim();
   const phone = $('#phone').value.trim();
-  if (!name) return alert('请填写姓名');
-  if (!phone) return alert('请填写手机号或微信号');
+  if (!name) return window.storefrontTranslator.alert('请填写姓名');
+  if (!phone) return window.storefrontTranslator.alert('请填写手机号或微信号');
 
   const items = [...state.quantities.entries()].map(([product_id, quantity]) => ({ product_id, quantity }));
   if (!items.length) return;
@@ -231,7 +231,7 @@ async function submitOrder() {
     document.querySelectorAll('.product').forEach((el) => el.classList.remove('selected'));
     window.location.assign(data.payment_url);
   } catch (error) {
-    alert(error.message);
+    await window.storefrontTranslator.alert(error.message);
   } finally {
     state.submitting = false;
     updateSummary();

@@ -375,6 +375,12 @@ npm run deploy
 
 本地已有数据库将 `--remote` 改为 `--local`。
 
+### 前台中英文切换
+
+前台右上角「中 / EN」按钮会在切到 EN 时自动识别当前页面中的中文，通过 Cloudflare Workers AI 翻译为英文；商品加载、购物车更新和支付提示等后续出现的中文也会翻译。切回「中」恢复页面原文。商品数据库不增加英文列，也不修改商品内容。翻译结果缓存在浏览器和 Worker 内存中，以减少重复调用。
+
+此功能需要 `wrangler.jsonc` 中的 `AI` binding 和 Cloudflare Workers AI 可用额度。翻译接口通过 `TRANSLATE_LIMITER` binding 限制每个来源每分钟最多 10 次请求。Workers AI 每天有免费额度，超过额度后根据账户套餐可能停止服务或产生费用；翻译不可用时页面会恢复中文并显示提示。本地 `wrangler dev` 使用 AI binding 时也会调用 Cloudflare 服务，可能消耗额度。
+
 ### 采购台账
 
 采购凭证原文件保存到 R2 bucket `bakery-procurement-files`，D1 保存关联元数据。支持 JPG、PNG、WebP 和 PDF，单个原文件最多 10 MB，不做压缩。部署前在 Cloudflare R2 创建该 bucket，并执行 `migrations/0005_procurement_files_r2.sql`；本地未配置 R2 时仍兼容读取旧的 D1 图片。
