@@ -375,6 +375,19 @@ npm run deploy
 
 本地已有数据库将 `--remote` 改为 `--local`。
 
+### 前台中英文切换
+
+前台右上角的「中 / EN」按钮即时切换页面文案，语言选择保存在浏览器中。后台「商品」可以填写英文商品名和英文描述；未填写时，英文页面显示该商品的原文。
+
+已有数据库须在发布本次代码前执行以下迁移（只执行一次）；新数据库使用最新 `schema.sql` 即可：
+
+```bash
+npx wrangler d1 execute bakery-db --remote --file=./migrations/0010_product_english.sql
+npm run deploy
+```
+
+本地已有数据库将 `--remote` 改为 `--local`。
+
 ### 采购台账
 
 采购凭证原文件保存到 R2 bucket `bakery-procurement-files`，D1 保存关联元数据。支持 JPG、PNG、WebP 和 PDF，单个原文件最多 10 MB，不做压缩。部署前在 Cloudflare R2 创建该 bucket，并执行 `migrations/0005_procurement_files_r2.sql`；本地未配置 R2 时仍兼容读取旧的 D1 图片。

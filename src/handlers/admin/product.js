@@ -31,6 +31,12 @@ export async function updateProduct({ request, env, params }) {
     if (body.description !== undefined) {
       fields.push('description = ?'); binds.push(String(body.description).trim().slice(0, 200));
     }
+    if (body.name_en !== undefined) {
+      fields.push('name_en = ?'); binds.push(String(body.name_en).trim().slice(0, 60));
+    }
+    if (body.description_en !== undefined) {
+      fields.push('description_en = ?'); binds.push(String(body.description_en).trim().slice(0, 200));
+    }
     if (body.emoji !== undefined) {
       fields.push('emoji = ?'); binds.push(String(body.emoji || '🥐').trim().slice(0, 8) || '🥐');
     }

@@ -155,8 +155,10 @@ function renderProducts(products) {
     <article class="order-card product-admin-row" data-product-id="${p.id}">
       <label class="image-picker">商品图片<img ${p.image_url ? `src="${escapeAttr(p.image_url)}"` : 'hidden'} alt="商品图片预览" /><input class="image-file" type="file" accept="image/jpeg,image/png,image/webp" /><small>选择图片后点击保存</small></label>
       <input class="name" value="${escapeAttr(p.name)}" aria-label="商品名" />
+      <input class="name-en" value="${escapeAttr(p.name_en || '')}" aria-label="英文商品名" placeholder="英文商品名（可选）" />
       <input class="price-input" type="number" step="0.01" min="0" value="${(p.price_cents / 100).toFixed(2)}" aria-label="价格" />
       <input class="desc" value="${escapeAttr(p.description || '')}" aria-label="描述" />
+      <input class="desc-en" value="${escapeAttr(p.description_en || '')}" aria-label="英文描述" placeholder="英文描述（可选）" />
       <label class="switch"><input class="active" type="checkbox" ${p.active ? 'checked' : ''} /> 上架</label>
       <button class="ghost save-product">保存</button>
     </article>
@@ -177,8 +179,10 @@ function renderProducts(products) {
           body:JSON.stringify({
             image_data:row.querySelector('.image-file').imageData,
             name:row.querySelector('.name').value,
+            name_en:row.querySelector('.name-en').value,
             price_cents:Math.round(price * 100),
             description:row.querySelector('.desc').value,
+            description_en:row.querySelector('.desc-en').value,
             active:row.querySelector('.active').checked ? 1 : 0
           })
         });
@@ -207,16 +211,20 @@ async function addProduct() {
       body:JSON.stringify({
         image_data:$('#newImage').imageData,
         name:$('#newName').value,
+        name_en:$('#newNameEn').value,
         price_cents:Math.round(price * 100),
-        description:$('#newDescription').value
+        description:$('#newDescription').value,
+        description_en:$('#newDescriptionEn').value
       })
     });
     $('#newImage').value = '';
     $('#newImage').imageData = undefined;
     $('#newImage').closest('label').querySelector('img').hidden = true;
     $('#newName').value = '';
+    $('#newNameEn').value = '';
     $('#newPrice').value = '';
     $('#newDescription').value = '';
+    $('#newDescriptionEn').value = '';
     await loadProducts();
   } catch (error) {
     alert(error.message);
