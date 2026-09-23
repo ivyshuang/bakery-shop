@@ -3,9 +3,7 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS products (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
-  name_en TEXT NOT NULL DEFAULT '',
   description TEXT NOT NULL DEFAULT '',
-  description_en TEXT NOT NULL DEFAULT '',
   price_cents INTEGER NOT NULL CHECK (price_cents >= 0),
   image_data TEXT NOT NULL DEFAULT '',
   emoji TEXT NOT NULL DEFAULT '🥐',
@@ -48,16 +46,16 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(order_status, payment_sta
 CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_alipay_out_trade_no ON orders(alipay_out_trade_no);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 
-INSERT INTO products (name, name_en, description, description_en, price_cents, emoji, sort_order)
-SELECT '海盐卷', 'Sea Salt Roll', '当天现烤，外脆内软', 'Baked fresh today, crisp outside and soft inside', 1200, '🥐', 10
+INSERT INTO products (name, description, price_cents, emoji, sort_order)
+SELECT '海盐卷', '当天现烤，外脆内软', 1200, '🥐', 10
 WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = '海盐卷');
 
-INSERT INTO products (name, name_en, description, description_en, price_cents, emoji, sort_order)
-SELECT '原味贝果', 'Plain Bagel', '低糖有嚼劲', 'Less sugar, with a satisfying chew', 1200, '🥯', 20
+INSERT INTO products (name, description, price_cents, emoji, sort_order)
+SELECT '原味贝果', '低糖有嚼劲', 1200, '🥯', 20
 WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = '原味贝果');
 
-INSERT INTO products (name, name_en, description, description_en, price_cents, emoji, sort_order)
-SELECT '黄油曲奇', 'Butter Cookies', '酥香小份装', 'Crisp, buttery cookies in a small pack', 1200, '🍪', 30
+INSERT INTO products (name, description, price_cents, emoji, sort_order)
+SELECT '黄油曲奇', '酥香小份装', 1200, '🍪', 30
 WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = '黄油曲奇');
 
 CREATE TABLE IF NOT EXISTS supplies (

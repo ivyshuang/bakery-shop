@@ -17,11 +17,6 @@ button, input, textarea { font: inherit; }
 button { cursor: pointer; }
 .shell { width: min(720px, 100%); margin: 0 auto; padding: 28px 16px 118px; }
 .hero { padding: 0 0 20px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
-.hero-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.language-toggle { display: inline-flex; align-items: center; gap: 5px; flex: none; padding: 6px 9px; border: 1px solid var(--line); border-radius: 5px; background: #fff; color: var(--muted); font-size: 12px; font-weight: 700; }
-.language-toggle .active { color: var(--ink); }
-.language-toggle:hover { border-color: #737373; }
-.language-toggle:focus-visible { outline: 2px solid #525252; outline-offset: 2px; }
 .hero h1 { margin: 5px 0 7px; font-size: clamp(28px, 7vw, 38px); line-height: 1.2; letter-spacing: -.02em; }
 .hero p { margin: 0; color: var(--muted); line-height: 1.6; font-size: 14px; }
 .eyebrow { font-size: 12px; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
