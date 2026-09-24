@@ -16,66 +16,66 @@
         <button id="languageToggle" class="language-toggle" type="button" aria-label="Switch to English" data-no-translate><span data-lang="zh">中</span><span aria-hidden="true">/</span><span data-lang="en">EN</span></button>
       </div>
       <div id="languageStatus" class="language-status" role="status" aria-live="polite" data-no-translate hidden></div>
-      <h1>RO·今日烘焙</h1>
-      <p>少量现烤 · 售完即止 · 下单后凭取餐码自提</p>
+      <h1>RO·今日烘焙 <small class="en-caption" lang="en" data-no-translate>Today's Bake</small></h1>
+      <p>少量现烤 · 售完即止 · 下单后凭取餐码自提 <small class="en-caption" lang="en" data-no-translate>Freshly baked in small batches · While supplies last · Pick up with your code</small></p>
     </header>
 
     <section class="notice card">
       <div>
-        <strong>自提说明</strong>
-        <p>提交订单后将跳转到支付宝，确认金额并完成付款。</p>
+        <strong>自提说明 <small class="en-caption" lang="en" data-no-translate>Pickup information</small></strong>
+        <p>提交订单后将跳转到支付宝，确认金额并完成付款。 <small class="en-caption" lang="en" data-no-translate>After placing your order, you'll be redirected to Alipay to confirm the amount and pay.</small></p>
       </div>
     </section>
 
     <section>
       <div class="section-title">
-        <h2>今天有什么</h2>
-        <span id="productCount">加载中…</span>
+        <h2>今天有什么 <small class="en-caption" lang="en" data-no-translate>Today's menu</small></h2>
+        <span id="productCount">加载中… <small class="en-caption" lang="en" data-no-translate>Loading…</small></span>
       </div>
       <div id="productList" class="products" aria-live="polite"></div>
     </section>
 
     <section class="checkout card">
       <div class="section-title">
-        <h2>取餐信息</h2>
+        <h2>取餐信息 <small class="en-caption" lang="en" data-no-translate>Pickup details</small></h2>
       </div>
-      <label>预计取餐时间<input id="pickupSlot" maxlength="60" placeholder="例如：今天 18:30 左右" /></label>
-      <label>备注<textarea id="note" maxlength="300" rows="3" placeholder="例如：不要纸袋 / 口味备注"></textarea></label>
+      <label>预计取餐时间 <small class="en-caption" lang="en" data-no-translate>Estimated pickup time</small><input id="pickupSlot" maxlength="60" placeholder="例如：今天 18:30 左右" /><small class="field-hint en-caption" lang="en" data-no-translate>e.g. Around 6:30 pm today</small></label>
+      <label>备注 <small class="en-caption" lang="en" data-no-translate>Notes</small><textarea id="note" maxlength="300" rows="3" placeholder="例如：不要纸袋 / 口味备注"></textarea><small class="field-hint en-caption" lang="en" data-no-translate>e.g. No paper bag / Flavor preferences</small></label>
     </section>
 
     <div class="order-dock">
       <section id="orderDetails" class="order-details" aria-label="已选商品" hidden>
         <div class="order-details-head">
-          <strong>已选商品</strong>
-          <span id="orderDetailsCount">0 件</span>
+          <strong>已选商品 <small class="en-caption" lang="en" data-no-translate>Selected items</small></strong>
+          <span id="orderDetailsCount">0 件 <small class="en-caption" lang="en" data-no-translate>items</small></span>
         </div>
         <div id="orderDetailsList" class="order-details-list"></div>
       </section>
       <section class="order-bar">
         <button id="orderSummaryToggle" class="order-summary-toggle" type="button" aria-expanded="false" aria-controls="orderDetails" disabled>
-          <span class="muted">合计 · 点击查看</span>
+          <span class="muted">合计 · 点击查看 <small class="en-caption" lang="en" data-no-translate>Total · Tap for details</small></span>
           <strong id="total">¥0.00</strong>
         </button>
-        <button id="submitOrder" class="primary" disabled>请选择商品</button>
+        <button id="submitOrder" class="primary" disabled>请选择商品 <small class="en-caption" lang="en" data-no-translate>Select items</small></button>
       </section>
     </div>
   </main>
 
   <dialog id="successDialog" class="success-dialog">
     <div class="success-icon">✓</div>
-    <h2 id="successTitle">订单已提交</h2>
-    <p id="successMessage" class="muted">请保存下面的取餐码</p>
+    <h2 id="successTitle">订单已提交 <small class="en-caption" lang="en" data-no-translate>Order placed</small></h2>
+    <p id="successMessage" class="muted">请保存下面的取餐码 <small class="en-caption" lang="en" data-no-translate>Save your pickup code below</small></p>
     <div id="pickupCode" class="pickup-code">----</div>
-    <div class="amount-row"><span>应付金额</span><strong id="successTotal">¥0.00</strong></div>
-    <div id="paymentState" class="payment-state">正在确认支付结果…</div>
-    <div class="tip">支付结果以支付宝通知为准。取餐时请出示取餐码。</div>
-    <button id="continuePayment" class="primary dialog-action" hidden>继续支付宝付款</button>
-    <button id="closeSuccess" class="secondary">知道了</button>
+    <div class="amount-row"><span>应付金额 <small class="en-caption" lang="en" data-no-translate>Amount due</small></span><strong id="successTotal">¥0.00</strong></div>
+    <div id="paymentState" class="payment-state">正在确认支付结果… <small class="en-caption" lang="en" data-no-translate>Checking payment…</small></div>
+    <div class="tip">支付结果以支付宝通知为准。取餐时请出示取餐码。 <small class="en-caption" lang="en" data-no-translate>Alipay's confirmation is final. Show your pickup code when collecting your order.</small></div>
+    <button id="continuePayment" class="primary dialog-action" hidden>继续支付宝付款 <small class="en-caption" lang="en" data-no-translate>Continue with Alipay</small></button>
+    <button id="closeSuccess" class="secondary">知道了 <small class="en-caption" lang="en" data-no-translate>Got it</small></button>
   </dialog>
 
   <template id="productTemplate">
     <article class="product card">
-      <div class="product-image"><span>暂无图片</span><img hidden loading="lazy" /></div>
+      <div class="product-image"><span>暂无图片 <small class="en-caption" lang="en" data-no-translate>No image</small></span><img hidden loading="lazy" /></div>
       <div class="product-copy">
         <h3></h3>
         <p></p>

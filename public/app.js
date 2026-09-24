@@ -7,6 +7,46 @@ const state = {
 const $ = (selector) => document.querySelector(selector);
 const money = (cents) => `¥${(Number(cents) / 100).toFixed(2)}`;
 const pendingOrderKey = 'bakery_pending_order';
+const knownProductTranslations = new Map([
+  ['海盐卷', 'Sea Salt Roll'],
+  ['当天现烤，外脆内软', 'Baked fresh today, crisp outside and soft inside'],
+  ['原味贝果', 'Plain Bagel'],
+  ['低糖有嚼劲', 'Low in sugar with a chewy texture'],
+  ['黄油曲奇', 'Butter Cookies'],
+  ['酥香小份装', 'Small serving, crisp and buttery'],
+  ['今日现烤', 'Freshly baked today']
+]);
+
+function setBilingual(element, chinese, english) {
+  element.replaceChildren(document.createTextNode(chinese));
+  if (!english) return;
+  const caption = document.createElement('small');
+  caption.className = 'en-caption';
+  caption.lang = 'en';
+  caption.dataset.noTranslate = '';
+  caption.textContent = english;
+  element.appendChild(caption);
+}
+
+async function addProductTranslations() {
+  const texts = [...new Set(state.products.flatMap((product) => [product.name, product.description || '今日现烤']))];
+  const missing = texts.filter((value) => /[\u3400-\u9fff]/u.test(value) && !knownProductTranslations.has(value));
+  if (missing.length) {
+    try {
+      const translated = await window.storefrontTranslator.translate(missing);
+      missing.forEach((value, index) => knownProductTranslations.set(value, translated[index]));
+    } catch (error) {
+      console.error('Product translation failed', error);
+    }
+  }
+  for (const product of state.products) {
+    const article = [...document.querySelectorAll('.product')].find((element) => element.dataset.id === String(product.id));
+    if (!article) continue;
+    setBilingual(article.querySelector('h3'), product.name, knownProductTranslations.get(product.name));
+    const description = product.description || '今日现烤';
+    setBilingual(article.querySelector('.product-copy p'), description, knownProductTranslations.get(description));
+  }
+}
 
 function readPendingOrder() {
   try {
@@ -19,7 +59,7 @@ function readPendingOrder() {
 function showOrderDialog(order, message) {
   $('#pickupCode').textContent = order.pickup_code;
   $('#successTotal').textContent = money(order.total_cents);
-  $('#successMessage').textContent = message;
+  setBilingual($('#successMessage'), message, message === '支付尚未完成，你可以继续付款' ? 'Payment incomplete. You can continue paying.' : 'Save your pickup code below');
   const dialog = $('#successDialog');
   if (typeof dialog.showModal === 'function') dialog.showModal();
   else dialog.setAttribute('open', '');
@@ -34,9 +74,9 @@ async function refreshPaymentStatus(order) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '读取支付状态失败');
       if (data.order.payment_status === 'paid') {
-        status.textContent = '支付宝付款成功';
+        setBilingual(status, '支付宝付款成功', 'Alipay payment successful');
         status.classList.add('paid');
-        $('#successTitle').textContent = '付款成功';
+        setBilingual($('#successTitle'), '付款成功', 'Payment successful');
         $('#continuePayment').hidden = true;
         sessionStorage.removeItem(pendingOrderKey);
         return;
@@ -48,7 +88,7 @@ async function refreshPaymentStatus(order) {
     if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
-  status.textContent = '暂未收到支付宝付款通知';
+  setBilingual(status, '暂未收到支付宝付款通知', 'Waiting for Alipay confirmation');
   status.classList.remove('paid');
   $('#continuePayment').hidden = !order.payment_url;
 }
@@ -77,7 +117,7 @@ async function loadProducts() {
     renderProducts();
   } catch (error) {
     list.innerHTML = `<div class="empty">${escapeHtml(error.message)}</div>`;
-    $('#productCount').textContent = '加载失败';
+    setBilingual($('#productCount'), '加载失败', 'Failed to load');
   }
 }
 
@@ -87,8 +127,8 @@ function renderProducts() {
   list.innerHTML = '';
 
   if (!state.products.length) {
-    list.innerHTML = '<div class="empty">今天还没有上架商品</div>';
-    $('#productCount').textContent = '0 款';
+    list.innerHTML = '<div class="empty">今天还没有上架商品 <small class="en-caption" lang="en" data-no-translate>No products available today</small></div>';
+    setBilingual($('#productCount'), '0 款', '0 products');
     return;
   }
 
@@ -103,8 +143,9 @@ function renderProducts() {
       image.hidden = false;
       image.addEventListener('error', () => { image.hidden = true; });
     }
-    node.querySelector('h3').textContent = product.name;
-    node.querySelector('.product-copy p').textContent = product.description || '今日现烤';
+    setBilingual(node.querySelector('h3'), product.name, knownProductTranslations.get(product.name));
+    const description = product.description || '今日现烤';
+    setBilingual(node.querySelector('.product-copy p'), description, knownProductTranslations.get(description));
     node.querySelector('.price').textContent = money(product.price_cents);
 
     node.querySelector('.minus').addEventListener('click', () => changeQty(product.id, -1));
@@ -112,8 +153,9 @@ function renderProducts() {
     list.appendChild(node);
   }
 
-  $('#productCount').textContent = `${state.products.length} 款`;
+  setBilingual($('#productCount'), `${state.products.length} 款`, `${state.products.length} products`);
   updateSummary();
+  addProductTranslations();
 }
 
 function changeQty(id, delta) {
@@ -142,7 +184,8 @@ function updateSummary() {
   renderOrderDetails(count);
   const button = $('#submitOrder');
   button.disabled = count === 0 || state.submitting;
-  button.textContent = state.submitting ? '正在提交…' : count ? `提交订单 · ${count} 件` : '请选择商品';
+  setBilingual(button, state.submitting ? '正在提交…' : count ? `提交订单 · ${count} 件` : '请选择商品',
+    state.submitting ? 'Submitting…' : count ? `Place order · ${count} items` : 'Select items');
 }
 
 function renderOrderDetails(count) {
@@ -150,7 +193,7 @@ function renderOrderDetails(count) {
   const list = $('#orderDetailsList');
   const toggle = $('#orderSummaryToggle');
   list.innerHTML = '';
-  $('#orderDetailsCount').textContent = `${count} 件`;
+  setBilingual($('#orderDetailsCount'), `${count} 件`, `${count} items`);
   toggle.disabled = count === 0;
 
   for (const product of state.products) {
@@ -162,7 +205,7 @@ function renderOrderDetails(count) {
     const imageBox = document.createElement('div');
     imageBox.className = 'order-detail-image';
     const imagePlaceholder = document.createElement('span');
-    imagePlaceholder.textContent = '无图';
+    setBilingual(imagePlaceholder, '无图', 'No image');
     imageBox.appendChild(imagePlaceholder);
     if (product.image_url) {
       const image = document.createElement('img');
@@ -172,7 +215,7 @@ function renderOrderDetails(count) {
       imageBox.appendChild(image);
     }
     const name = document.createElement('span');
-    name.textContent = product.name;
+    setBilingual(name, product.name, knownProductTranslations.get(product.name));
     const qty = document.createElement('span');
     qty.className = 'detail-qty';
     qty.textContent = `× ${quantity}`;

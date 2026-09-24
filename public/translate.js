@@ -176,6 +176,7 @@
     attributeFilter: [...attributes, 'content']
   });
   window.storefrontTranslator = {
+    translate: translateTexts,
     async alert(message) {
       let value = String(message);
       if (language === 'en' && chinese.test(value)) {
